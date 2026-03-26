@@ -51,6 +51,17 @@ sim = Simulator()
 ```
 
   </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+// Create a new simulator instance
+sim, _ := sdk.SimulatorNew()
+defer sim.Free()
+```
+
+  </TabItem>
 </Tabs>
 
 The simulator starts with an empty state. You'll need to create coins before you can spend them.
@@ -117,6 +128,30 @@ charlie = sim.bls(0)  # No initial funds
 ```
 
   </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+sim, _ := sdk.SimulatorNew()
+defer sim.Free()
+
+// Create a key pair with a coin worth 1000 mojos
+alice, _ := sim.Bls(1000)
+defer alice.Sk.Free()
+defer alice.Pk.Free()
+
+// alice contains:
+// - alice.Pk: *PublicKey
+// - alice.Sk: *SecretKey
+// - alice.PuzzleHash: []byte
+// - alice.Coin: Coin
+
+// Create multiple test identities
+alice, _ := sim.Bls(1_000_000)
+bob, _ := sim.Bls(500_000)
+charlie, _ := sim.Bls(0) // No initial funds
+```
+
+  </TabItem>
 </Tabs>
 
 ## Validating Transactions
@@ -177,6 +212,37 @@ clvm.spend_standard_coin(alice.coin, alice.pk, clvm.delegated_spend(conditions))
 # Extract spends and validate
 coin_spends = clvm.coin_spends()
 sim.spend_coins(coin_spends, [alice.sk])
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+sim, _ := sdk.SimulatorNew()
+defer sim.Free()
+
+clvm, _ := sim.Clvm()
+defer clvm.Free()
+
+alice, _ := sim.Bls(1000)
+defer alice.Sk.Free()
+defer alice.Pk.Free()
+
+bob, _ := sim.Bls(0)
+defer bob.Sk.Free()
+defer bob.Pk.Free()
+
+// Build your transaction
+conditions := []interface{}{
+    clvm.CreateCoin(bob.PuzzleHash, 900, nil),
+    clvm.ReserveFee(100),
+}
+
+clvm.SpendStandardCoin(alice.Coin, alice.Pk, clvm.DelegatedSpend(conditions))
+
+// Extract spends and validate
+coinSpends, _ := clvm.CoinSpends()
+sim.SpendCoins(coinSpends, []*sdk.SecretKey{alice.Sk})
 ```
 
   </TabItem>
@@ -272,6 +338,60 @@ def test_simple_transfer():
 
     clvm.spend_standard_coin(alice.coin, alice.pk, clvm.delegated_spend(conditions))
     sim.spend_coins(clvm.coin_spends(), [alice.sk])
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+package chiawalletsdk_test
+
+import (
+    "testing"
+
+    sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+)
+
+func TestSimpleTransfer(t *testing.T) {
+    sim, err := sdk.SimulatorNew()
+    if err != nil {
+        t.Fatalf("failed to create simulator: %v", err)
+    }
+    defer sim.Free()
+
+    clvm, err := sim.Clvm()
+    if err != nil {
+        t.Fatalf("failed to create clvm: %v", err)
+    }
+    defer clvm.Free()
+
+    alice, err := sim.Bls(1000)
+    if err != nil {
+        t.Fatalf("failed to create alice: %v", err)
+    }
+    defer alice.Sk.Free()
+    defer alice.Pk.Free()
+
+    bob, err := sim.Bls(0)
+    if err != nil {
+        t.Fatalf("failed to create bob: %v", err)
+    }
+    defer bob.Sk.Free()
+    defer bob.Pk.Free()
+
+    conditions := []interface{}{
+        clvm.CreateCoin(bob.PuzzleHash, 900, nil),
+        clvm.ReserveFee(100),
+    }
+
+    clvm.SpendStandardCoin(alice.Coin, alice.Pk, clvm.DelegatedSpend(conditions))
+
+    coinSpends, _ := clvm.CoinSpends()
+    _, err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{alice.Sk})
+    if err != nil {
+        t.Fatalf("failed to spend coins: %v", err)
+    }
+}
 ```
 
   </TabItem>
@@ -409,6 +529,78 @@ def test_issues_and_spends_a_cat():
 ```
 
   </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+package chiawalletsdk_test
+
+import (
+    "testing"
+
+    sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+)
+
+func TestIssuesAndSpendsACat(t *testing.T) {
+    sim, err := sdk.SimulatorNew()
+    if err != nil {
+        t.Fatalf("failed to create simulator: %v", err)
+    }
+    defer sim.Free()
+
+    clvm, err := sim.Clvm()
+    if err != nil {
+        t.Fatalf("failed to create clvm: %v", err)
+    }
+    defer clvm.Free()
+
+    alice, err := sim.Bls(1)
+    if err != nil {
+        t.Fatalf("failed to create alice: %v", err)
+    }
+    defer alice.Sk.Free()
+    defer alice.Pk.Free()
+
+    tail, _ := clvm.Nil()
+    assetId, _ := tail.TreeHash()
+    catInfo, _ := sdk.NewCatInfo(assetId, nil, alice.PuzzleHash)
+
+    // Issue a CAT
+    catPuzzleHash, _ := catInfo.PuzzleHash()
+    clvm.SpendStandardCoin(
+        alice.Coin,
+        alice.Pk,
+        clvm.DelegatedSpend([]interface{}{clvm.CreateCoin(catPuzzleHash, 1, nil)}),
+    )
+
+    coinId, _ := alice.Coin.CoinId()
+    eveCoin, _ := sdk.NewCoin(coinId, catPuzzleHash, 1)
+    eve, _ := sdk.NewCat(eveCoin, nil, catInfo)
+
+    nilPtr, _ := clvm.Nil()
+    allocMemos, _ := clvm.Alloc([][]byte{alice.PuzzleHash})
+
+    clvm.SpendCats([]interface{}{
+        sdk.NewCatSpend(
+            eve,
+            clvm.StandardSpend(
+                alice.Pk,
+                clvm.DelegatedSpend([]interface{}{
+                    clvm.CreateCoin(alice.PuzzleHash, 1, allocMemos),
+                    clvm.RunCatTail(tail, nilPtr),
+                }),
+            ),
+        ),
+    })
+
+    coinSpends, _ := clvm.CoinSpends()
+    _, err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{alice.Sk})
+    if err != nil {
+        t.Fatalf("failed to spend coins: %v", err)
+    }
+}
+```
+
+  </TabItem>
 </Tabs>
 
 ### Testing Invalid Transactions
@@ -478,6 +670,52 @@ def test_insufficient_funds_fails():
     # This should raise an exception
     with pytest.raises(Exception):
         sim.spend_coins(clvm.coin_spends(), [alice.sk])
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+package chiawalletsdk_test
+
+import (
+    "testing"
+
+    sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+)
+
+func TestInsufficientFundsFails(t *testing.T) {
+    sim, err := sdk.SimulatorNew()
+    if err != nil {
+        t.Fatalf("failed to create simulator: %v", err)
+    }
+    defer sim.Free()
+
+    clvm, err := sim.Clvm()
+    if err != nil {
+        t.Fatalf("failed to create clvm: %v", err)
+    }
+    defer clvm.Free()
+
+    alice, err := sim.Bls(1000)
+    if err != nil {
+        t.Fatalf("failed to create alice: %v", err)
+    }
+    defer alice.Sk.Free()
+    defer alice.Pk.Free()
+
+    // Try to create more than we have
+    conditions := []interface{}{clvm.CreateCoin(alice.PuzzleHash, 2000, nil)}
+
+    clvm.SpendStandardCoin(alice.Coin, alice.Pk, clvm.DelegatedSpend(conditions))
+
+    // This should return an error
+    coinSpends, _ := clvm.CoinSpends()
+    _, err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{alice.Sk})
+    if err == nil {
+        t.Fatalf("expected error for insufficient funds, got nil")
+    }
+}
 ```
 
   </TabItem>
@@ -585,6 +823,77 @@ def test_multi_spend():
     )
 
     sim.spend_coins(clvm.coin_spends(), [alice.sk, bob.sk])
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+package chiawalletsdk_test
+
+import (
+    "testing"
+
+    sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+)
+
+func TestMultiSpend(t *testing.T) {
+    sim, err := sdk.SimulatorNew()
+    if err != nil {
+        t.Fatalf("failed to create simulator: %v", err)
+    }
+    defer sim.Free()
+
+    clvm, err := sim.Clvm()
+    if err != nil {
+        t.Fatalf("failed to create clvm: %v", err)
+    }
+    defer clvm.Free()
+
+    alice, err := sim.Bls(1000)
+    if err != nil {
+        t.Fatalf("failed to create alice: %v", err)
+    }
+    defer alice.Sk.Free()
+    defer alice.Pk.Free()
+
+    bob, err := sim.Bls(500)
+    if err != nil {
+        t.Fatalf("failed to create bob: %v", err)
+    }
+    defer bob.Sk.Free()
+    defer bob.Pk.Free()
+
+    charlie, err := sim.Bls(0)
+    if err != nil {
+        t.Fatalf("failed to create charlie: %v", err)
+    }
+    defer charlie.Sk.Free()
+    defer charlie.Pk.Free()
+
+    // Alice sends 900
+    clvm.SpendStandardCoin(
+        alice.Coin,
+        alice.Pk,
+        clvm.DelegatedSpend([]interface{}{clvm.CreateCoin(charlie.PuzzleHash, 900, nil)}),
+    )
+
+    // Bob pays the fee
+    clvm.SpendStandardCoin(
+        bob.Coin,
+        bob.Pk,
+        clvm.DelegatedSpend([]interface{}{
+            clvm.CreateCoin(bob.PuzzleHash, 400, nil),
+            clvm.ReserveFee(100),
+        }),
+    )
+
+    coinSpends, _ := clvm.CoinSpends()
+    _, err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{alice.Sk, bob.Sk})
+    if err != nil {
+        t.Fatalf("failed to spend coins: %v", err)
+    }
+}
 ```
 
   </TabItem>

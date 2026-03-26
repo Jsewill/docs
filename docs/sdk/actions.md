@@ -94,6 +94,25 @@ index = new_asset.as_new()  # Returns int or None
 ```
 
   </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+// Reference native XCH
+xch, _ := sdk.IdXch()
+defer xch.Free()
+
+// Reference an existing asset by its ID
+existingCat, _ := sdk.IdExisting(assetId)
+defer existingCat.Free()
+
+// Reference a new asset created in the current transaction
+newAsset, _ := sdk.IdNew(0) // First action that creates an asset
+defer newAsset.Free()
+```
+
+  </TabItem>
 </Tabs>
 
 ## Creating Actions
@@ -162,6 +181,25 @@ send_with_memo = Action.send(Id.xch(), recipient_puzzle_hash, 1000, memo_program
 ```
 
   </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+// Send XCH
+sendXch, _ := sdk.ActionSend(sdk.IdXch(), recipientPuzzleHash, 1000, nil)
+defer sendXch.Free()
+
+// Send a CAT
+sendCat, _ := sdk.ActionSend(sdk.IdExisting(assetId), recipientPuzzleHash, 500, nil)
+defer sendCat.Free()
+
+// Send a newly created asset (from action at index 0)
+sendNew, _ := sdk.ActionSend(sdk.IdNew(0), recipientPuzzleHash, 100, nil)
+defer sendNew.Free()
+```
+
+  </TabItem>
 </Tabs>
 
 ### Fee Action
@@ -187,6 +225,16 @@ const fee = Action.fee(1000n);
 
 ```python
 fee = Action.fee(1000)
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+fee, _ := sdk.ActionFee(1000)
+defer fee.Free()
 ```
 
   </TabItem>
@@ -227,6 +275,17 @@ issue = Action.single_issue_cat(None, 1_000_000)
 
 # Multi-issuance CAT with custom TAIL
 issue_with_tail = Action.issue_cat(tail_spend, None, 1_000_000)
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+// Single issuance CAT (genesis by coin ID - can only mint once)
+issue, _ := sdk.ActionIssueCat(nil, 1_000_000)
+defer issue.Free()
 ```
 
   </TabItem>
@@ -332,6 +391,32 @@ metadata_update = Spend(
     clvm.list([clvm.string("u"), clvm.string("https://example.com/new-uri")])
 )
 update = Action.update_nft(Id.existing(launcher_id), [metadata_update])
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+clvm, _ := sdk.ClvmNew()
+defer clvm.Free()
+
+// Mint an NFT
+mint, _ := sdk.ActionMintNft(
+    clvm,
+    clvm.NftMetadata(metadata),
+    sdk.ConstantsNftMetadataUpdaterDefaultHash(),
+    royaltyPuzzleHash,
+    300, // 3% royalty
+    1,
+    nil, // parent ID (optional)
+)
+defer mint.Free()
+
+// Update NFT metadata
+update, _ := sdk.ActionUpdateNft(sdk.IdExisting(launcherId), metadataSpends)
+defer update.Free()
 ```
 
   </TabItem>
@@ -469,6 +554,39 @@ sim.spend_coins(clvm.coin_spends(), [pair.sk])
 ```
 
   </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+clvm, _ := sdk.ClvmNew()
+defer clvm.Free()
+
+// 1. Create Spends with a change puzzle hash
+spends, _ := sdk.NewSpends(clvm, changePuzzleHash)
+defer spends.Free()
+
+// 2. Add coins to spend
+spends.AddXch(coin)
+
+// 3. Define actions
+actions := []sdk.Action{
+    sdk.ActionSend(sdk.IdXch(), recipientPuzzleHash, 500, nil),
+    sdk.ActionFee(100),
+}
+
+// 4. Apply actions
+spends.Apply(actions)
+
+// 5. Calculate deltas and prepare
+deltas, _ := sdk.DeltasFromActions(actions)
+defer deltas.Free()
+
+finished, _ := spends.Prepare(deltas)
+defer finished.Free()
+```
+
+  </TabItem>
 </Tabs>
 
 ## Understanding Deltas
@@ -532,6 +650,17 @@ for id in deltas.ids():
 # Check if an asset needs to be provided
 if deltas.is_needed(Id.xch()):
     print("Need to provide XCH")
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+// Calculate deltas from actions
+deltas, _ := sdk.DeltasFromActions(actions)
+defer deltas.Free()
 ```
 
   </TabItem>
@@ -600,6 +729,24 @@ nft_ids = outputs.nfts()
 # Get a specific NFT
 nft = outputs.nft(nft_ids[0])
 print(f"NFT launcher ID: {nft.info.launcher_id.hex()}")
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+// Access outputs after spending
+catIds, _ := outputs.Cats()
+cats, _ := outputs.Cat(catIds[0])
+for _, cat := range cats {
+    fmt.Printf("Created CAT: %d\n", cat.Coin.Amount)
+}
+
+nftIds, _ := outputs.Nfts()
+nft, _ := outputs.Nft(nftIds[0])
+fmt.Printf("NFT launcher ID: %x\n", nft.Info.LauncherId)
 ```
 
   </TabItem>
@@ -731,6 +878,46 @@ def send_xch(recipient_puzzle_hash: bytes, amount: int, fee: int):
     sim.spend_coins(clvm.coin_spends(), [sender.sk])
 
     return outputs
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+package main
+
+import (
+	"fmt"
+	sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+)
+
+func sendXch(recipientPuzzleHash []byte, amount uint64, fee uint64) error {
+	clvm, _ := sdk.ClvmNew()
+	defer clvm.Free()
+
+	// Create spends
+	spends, _ := sdk.NewSpends(clvm, senderPh)
+	defer spends.Free()
+
+	// Add coins
+	spends.AddXch(coin)
+
+	// Apply actions
+	actions := []sdk.Action{
+		sdk.ActionSend(sdk.IdXch(), recipientPuzzleHash, amount, nil),
+		sdk.ActionFee(fee),
+	}
+	spends.Apply(actions)
+
+	// Prepare and finish
+	deltas, _ := sdk.DeltasFromActions(actions)
+	defer deltas.Free()
+
+	finished, _ := spends.Prepare(deltas)
+	defer finished.Free()
+
+	return nil
+}
 ```
 
   </TabItem>
@@ -882,6 +1069,46 @@ def issue_and_send_cat(
     asset_id = outputs.cat(cat_ids[0])[0].info.asset_id
 
     return asset_id, outputs
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+package main
+
+import (
+	"fmt"
+	sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+)
+
+func issueAndSendCat(recipientPuzzleHash []byte, issuanceAmount uint64, sendAmount uint64) error {
+	clvm, _ := sdk.ClvmNew()
+	defer clvm.Free()
+
+	// Create spends
+	spends, _ := sdk.NewSpends(clvm, alicePh)
+	defer spends.Free()
+
+	// Add coins
+	spends.AddXch(coin)
+
+	// Issue CAT at index 0, then send from it
+	actions := []sdk.Action{
+		sdk.ActionIssueCat(nil, issuanceAmount),
+		sdk.ActionSend(sdk.IdNew(0), recipientPuzzleHash, sendAmount, nil),
+	}
+	spends.Apply(actions)
+
+	// Prepare and finish
+	deltas, _ := sdk.DeltasFromActions(actions)
+	defer deltas.Free()
+
+	finished, _ := spends.Prepare(deltas)
+	defer finished.Free()
+
+	return nil
+}
 ```
 
   </TabItem>
@@ -1069,6 +1296,54 @@ def mint_and_update_nft():
     nft = outputs.nft(nft_id)
 
     return nft.info.launcher_id, outputs
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+package main
+
+import (
+	"fmt"
+	sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+)
+
+func mintAndUpdateNft() error {
+	clvm, _ := sdk.ClvmNew()
+	defer clvm.Free()
+
+	// Create spends
+	spends, _ := sdk.NewSpends(clvm, alicePh)
+	defer spends.Free()
+
+	// Add coins
+	spends.AddXch(coin)
+
+	// Mint NFT and update metadata in one transaction
+	actions := []sdk.Action{
+		sdk.ActionMintNft(
+			clvm,
+			clvm.NftMetadata(metadata),
+			sdk.ConstantsNftMetadataUpdaterDefaultHash(),
+			alicePh,
+			300, // 3% royalty
+			1,
+			nil,
+		),
+		sdk.ActionUpdateNft(sdk.IdNew(0), metadataSpends),
+	}
+	spends.Apply(actions)
+
+	// Prepare and finish
+	deltas, _ := sdk.DeltasFromActions(actions)
+	defer deltas.Free()
+
+	finished, _ := spends.Prepare(deltas)
+	defer finished.Free()
+
+	return nil
+}
 ```
 
   </TabItem>

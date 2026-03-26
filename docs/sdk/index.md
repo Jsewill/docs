@@ -51,6 +51,21 @@ pip install chia-wallet-sdk
 The Python bindings provide a Pythonic API with full type stub support for IDE autocompletion.
 
   </TabItem>
+  <TabItem value="go" label="Go">
+
+Build the shared library and use with CGo:
+
+```bash
+cd go && make build
+```
+
+```go
+import "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+```
+
+The Go bindings use CGo to call into the Rust shared library. See the [go/](https://github.com/xch-dev/chia-wallet-sdk/tree/main/go) directory for build instructions.
+
+  </TabItem>
 </Tabs>
 
 ## Quick Example
@@ -137,13 +152,40 @@ coin_spends = clvm.coin_spends()
 ```
 
   </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+// Create a CLVM instance to build the transaction
+clvm, _ := sdk.ClvmNew()
+defer clvm.Free()
+
+// Create conditions:
+// - Create a new coin with 900 mojos
+// - Reserve 100 mojos as transaction fee
+createCoin, _ := clvm.CreateCoin(puzzleHash, 900, nil)
+defer createCoin.Free()
+reserveFee, _ := clvm.ReserveFee(100)
+defer reserveFee.Free()
+
+// Create and spend using delegated spend (p2 puzzle)
+delegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin, reserveFee})
+defer delegated.Free()
+clvm.SpendStandardCoin(coin, publicKey, delegated)
+
+// Extract the coin spends for signing and broadcast
+coinSpends, _ := clvm.CoinSpends()
+```
+
+  </TabItem>
 </Tabs>
 
 This example demonstrates the core pattern you'll use throughout the SDK:
 
-1. **Create a context** - In Rust, use `SpendContext`; in Node.js/Python, use the `Clvm` class
+1. **Create a context** - In Rust, use `SpendContext`; in Node.js/Python/Go, use the `Clvm` class
 2. **Build conditions** - Define what the transaction should do (create coins, fees, announcements)
-3. **Spend coins** - Use primitives like `StandardLayer` (Rust) or `spendStandardCoin` (bindings)
+3. **Spend coins** - Use primitives like `StandardLayer` (Rust) or `SpendStandardCoin` / `spendStandardCoin` (bindings)
 4. **Extract and broadcast** - Take the collected spends, sign them, and submit to the network
 
 ## Core Concepts

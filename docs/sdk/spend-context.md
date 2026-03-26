@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 `SpendContext` is the central abstraction for building transactions in the Wallet SDK. It manages CLVM memory allocation, caches puzzle hashes for efficiency, and collects coin spends that will form your transaction.
 
 :::info Language Bindings
-In Node.js and Python, the equivalent functionality is provided by the `Clvm` class. While the API differs slightly, the core concepts remain the same: allocate CLVM values, build spends, and collect coin spends.
+In Node.js, Python, and Go, the equivalent functionality is provided by the `Clvm` class. While the API differs slightly, the core concepts remain the same: allocate CLVM values, build spends, and collect coin spends.
 :::
 
 ## What SpendContext Does
@@ -56,6 +56,21 @@ clvm = Clvm()
 ```
 
 The `Clvm` class combines the functionality of `SpendContext` (memory management and spend collection) with direct methods for creating conditions and spending coins.
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+clvm, err := sdk.ClvmNew()
+if err != nil {
+    // handle error
+}
+defer clvm.Free()
+```
+
+The `Clvm` type combines the functionality of `SpendContext` (memory management and spend collection) with direct methods for creating conditions and spending coins. All allocated objects must be freed with `defer obj.Free()`.
 
   </TabItem>
 </Tabs>
@@ -109,6 +124,23 @@ clvm.spend_nft(nft, inner_spend)
 ```
 
   </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+// SpendStandardCoin handles puzzle construction and collects spends internally
+spend, err := clvm.DelegatedSpend(conditions)
+if err != nil {
+    // handle error
+}
+defer spend.Free()
+
+err = clvm.SpendStandardCoin(coin, publicKey, spend)
+if err != nil {
+    // handle error
+}
+```
+
+  </TabItem>
 </Tabs>
 
 ### Extracting Spends
@@ -137,9 +169,20 @@ coin_spends = clvm.coin_spends()
 ```
 
   </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+coinSpends, err := clvm.CoinSpends()
+if err != nil {
+    // handle error
+}
+defer coinSpends.Free()
+```
+
+  </TabItem>
 </Tabs>
 
-The `take()` / `coinSpends()` / `coin_spends()` method removes all spends from the context, allowing you to reuse it for building another transaction.
+The `take()` / `coinSpends()` / `coin_spends()` / `CoinSpends()` method removes all spends from the context, allowing you to reuse it for building another transaction.
 
 ### Allocating CLVM Values
 
@@ -185,6 +228,24 @@ hash = program.tree_hash()
 
 # Allocate nil (empty list)
 nil = clvm.nil()
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+// Allocate values to CLVM (returns a Program)
+program, err := clvm.Alloc([]any{puzzleHash, amount})
+if err != nil {
+    // handle error
+}
+defer program.Free()
+
+// Get tree hash of a program
+hash, err := clvm.TreeHash(program)
+if err != nil {
+    // handle error
+}
 ```
 
   </TabItem>
@@ -363,6 +424,64 @@ def build_transaction(
 
     # 4. Extract and return spends
     return clvm.coin_spends()
+```
+
+  </TabItem>
+  <TabItem value="go" label="Go">
+
+```go
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+
+func buildTransaction(
+    coin sdk.Coin,
+    publicKey sdk.PublicKey,
+    recipient []byte,
+    amount uint64,
+    fee uint64,
+) ([]sdk.CoinSpend, error) {
+    // 1. Create context
+    clvm, err := sdk.ClvmNew()
+    if err != nil {
+        return nil, err
+    }
+    defer clvm.Free()
+
+    // 2. Build conditions with hints
+    memos, err := clvm.Alloc([]any{recipient})
+    if err != nil {
+        return nil, err
+    }
+    defer memos.Free()
+
+    createCoin, err := clvm.CreateCoin(recipient, amount, memos)
+    if err != nil {
+        return nil, err
+    }
+    defer createCoin.Free()
+
+    reserveFee, err := clvm.ReserveFee(fee)
+    if err != nil {
+        return nil, err
+    }
+    defer reserveFee.Free()
+
+    conditions := []any{createCoin, reserveFee}
+
+    // 3. Spend the coin
+    spend, err := clvm.DelegatedSpend(conditions)
+    if err != nil {
+        return nil, err
+    }
+    defer spend.Free()
+
+    err = clvm.SpendStandardCoin(coin, publicKey, spend)
+    if err != nil {
+        return nil, err
+    }
+
+    // 4. Extract and return spends
+    return clvm.CoinSpends()
+}
 ```
 
   </TabItem>
