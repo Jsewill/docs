@@ -101,15 +101,15 @@ import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // Reference native XCH
 xch, _ := sdk.IdXch()
-defer xch.Free()
+defer xch.Close()
 
 // Reference an existing asset by its ID
 existingCat, _ := sdk.IdExisting(assetId)
-defer existingCat.Free()
+defer existingCat.Close()
 
 // Reference a new asset created in the current transaction
 newAsset, _ := sdk.IdNew(0) // First action that creates an asset
-defer newAsset.Free()
+defer newAsset.Close()
 ```
 
   </TabItem>
@@ -188,15 +188,15 @@ import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // Send XCH
 sendXch, _ := sdk.ActionSend(sdk.IdXch(), recipientPuzzleHash, 1000, nil)
-defer sendXch.Free()
+defer sendXch.Close()
 
 // Send a CAT
 sendCat, _ := sdk.ActionSend(sdk.IdExisting(assetId), recipientPuzzleHash, 500, nil)
-defer sendCat.Free()
+defer sendCat.Close()
 
 // Send a newly created asset (from action at index 0)
 sendNew, _ := sdk.ActionSend(sdk.IdNew(0), recipientPuzzleHash, 100, nil)
-defer sendNew.Free()
+defer sendNew.Close()
 ```
 
   </TabItem>
@@ -234,7 +234,7 @@ fee = Action.fee(1000)
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 fee, _ := sdk.ActionFee(1000)
-defer fee.Free()
+defer fee.Close()
 ```
 
   </TabItem>
@@ -285,7 +285,7 @@ import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // Single issuance CAT (genesis by coin ID - can only mint once)
 issue, _ := sdk.ActionIssueCat(nil, 1_000_000)
-defer issue.Free()
+defer issue.Close()
 ```
 
   </TabItem>
@@ -400,7 +400,7 @@ update = Action.update_nft(Id.existing(launcher_id), [metadata_update])
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 // Mint an NFT
 mint, _ := sdk.ActionMintNft(
@@ -412,11 +412,11 @@ mint, _ := sdk.ActionMintNft(
     1,
     nil, // parent ID (optional)
 )
-defer mint.Free()
+defer mint.Close()
 
 // Update NFT metadata
 update, _ := sdk.ActionUpdateNft(sdk.IdExisting(launcherId), metadataSpends)
-defer update.Free()
+defer update.Close()
 ```
 
   </TabItem>
@@ -560,11 +560,11 @@ sim.spend_coins(clvm.coin_spends(), [pair.sk])
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 // 1. Create Spends with a change puzzle hash
 spends, _ := sdk.NewSpends(clvm, changePuzzleHash)
-defer spends.Free()
+defer spends.Close()
 
 // 2. Add coins to spend
 spends.AddXch(coin)
@@ -580,10 +580,10 @@ spends.Apply(actions)
 
 // 5. Calculate deltas and prepare
 deltas, _ := sdk.DeltasFromActions(actions)
-defer deltas.Free()
+defer deltas.Close()
 
 finished, _ := spends.Prepare(deltas)
-defer finished.Free()
+defer finished.Close()
 ```
 
   </TabItem>
@@ -660,7 +660,7 @@ import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // Calculate deltas from actions
 deltas, _ := sdk.DeltasFromActions(actions)
-defer deltas.Free()
+defer deltas.Close()
 ```
 
   </TabItem>
@@ -893,11 +893,11 @@ import (
 
 func sendXch(recipientPuzzleHash []byte, amount uint64, fee uint64) error {
 	clvm, _ := sdk.ClvmNew()
-	defer clvm.Free()
+	defer clvm.Close()
 
 	// Create spends
 	spends, _ := sdk.NewSpends(clvm, senderPh)
-	defer spends.Free()
+	defer spends.Close()
 
 	// Add coins
 	spends.AddXch(coin)
@@ -911,10 +911,10 @@ func sendXch(recipientPuzzleHash []byte, amount uint64, fee uint64) error {
 
 	// Prepare and finish
 	deltas, _ := sdk.DeltasFromActions(actions)
-	defer deltas.Free()
+	defer deltas.Close()
 
 	finished, _ := spends.Prepare(deltas)
-	defer finished.Free()
+	defer finished.Close()
 
 	return nil
 }
@@ -1084,11 +1084,11 @@ import (
 
 func issueAndSendCat(recipientPuzzleHash []byte, issuanceAmount uint64, sendAmount uint64) error {
 	clvm, _ := sdk.ClvmNew()
-	defer clvm.Free()
+	defer clvm.Close()
 
 	// Create spends
 	spends, _ := sdk.NewSpends(clvm, alicePh)
-	defer spends.Free()
+	defer spends.Close()
 
 	// Add coins
 	spends.AddXch(coin)
@@ -1102,10 +1102,10 @@ func issueAndSendCat(recipientPuzzleHash []byte, issuanceAmount uint64, sendAmou
 
 	// Prepare and finish
 	deltas, _ := sdk.DeltasFromActions(actions)
-	defer deltas.Free()
+	defer deltas.Close()
 
 	finished, _ := spends.Prepare(deltas)
-	defer finished.Free()
+	defer finished.Close()
 
 	return nil
 }
@@ -1311,11 +1311,11 @@ import (
 
 func mintAndUpdateNft() error {
 	clvm, _ := sdk.ClvmNew()
-	defer clvm.Free()
+	defer clvm.Close()
 
 	// Create spends
 	spends, _ := sdk.NewSpends(clvm, alicePh)
-	defer spends.Free()
+	defer spends.Close()
 
 	// Add coins
 	spends.AddXch(coin)
@@ -1337,10 +1337,10 @@ func mintAndUpdateNft() error {
 
 	// Prepare and finish
 	deltas, _ := sdk.DeltasFromActions(actions)
-	defer deltas.Free()
+	defer deltas.Close()
 
 	finished, _ := spends.Prepare(deltas)
-	defer finished.Free()
+	defer finished.Close()
 
 	return nil
 }

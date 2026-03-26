@@ -159,19 +159,19 @@ import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // Create a CLVM instance to build the transaction
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 // Create conditions:
 // - Create a new coin with 900 mojos
 // - Reserve 100 mojos as transaction fee
 createCoin, _ := clvm.CreateCoin(puzzleHash, 900, nil)
-defer createCoin.Free()
+defer createCoin.Close()
 reserveFee, _ := clvm.ReserveFee(100)
-defer reserveFee.Free()
+defer reserveFee.Close()
 
 // Create and spend using delegated spend (p2 puzzle)
 delegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin, reserveFee})
-defer delegated.Free()
+defer delegated.Close()
 clvm.SpendStandardCoin(coin, publicKey, delegated)
 
 // Extract the coin spends for signing and broadcast

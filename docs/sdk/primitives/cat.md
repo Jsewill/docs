@@ -144,17 +144,17 @@ import (
 
 func main() {
 	clvm, _ := sdk.ClvmNew()
-	defer clvm.Free()
+	defer clvm.Close()
 
 	sim, _ := sdk.SimulatorNew()
-	defer sim.Free()
+	defer sim.Close()
 
 	alice, _ := sim.Bls(1000)
-	defer alice.Free()
+	defer alice.Close()
 
 	// Create a simple TAIL (genesis by coin ID uses nil TAIL for single issuance)
 	tail, _ := clvm.Nil()
-	defer tail.Free()
+	defer tail.Close()
 
 	assetId, _ := tail.TreeHash()
 
@@ -162,22 +162,22 @@ func main() {
 
 	// Create CAT info with the asset ID and inner puzzle hash
 	catInfo, _ := sdk.NewCatInfo(assetId, nil, puzzleHash)
-	defer catInfo.Free()
+	defer catInfo.Close()
 
 	catPuzzleHash, _ := catInfo.PuzzleHash()
 
 	// Issue the CAT by spending the parent coin
 	createCoin, _ := clvm.CreateCoin(catPuzzleHash, 1000, nil)
-	defer createCoin.Free()
+	defer createCoin.Close()
 
 	delegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin})
-	defer delegated.Free()
+	defer delegated.Close()
 
 	coin, _ := alice.Coin()
-	defer coin.Free()
+	defer coin.Close()
 
 	pk, _ := alice.Pk()
-	defer pk.Free()
+	defer pk.Close()
 
 	err := clvm.SpendStandardCoin(coin, pk, delegated)
 	if err != nil {
@@ -188,10 +188,10 @@ func main() {
 	coinId, _ := coin.CoinId()
 
 	eveCoin, _ := sdk.NewCoin(coinId, catPuzzleHash, 1000)
-	defer eveCoin.Free()
+	defer eveCoin.Close()
 
 	eveCat, _ := sdk.NewCat(eveCoin, nil, catInfo)
-	defer eveCat.Free()
+	defer eveCat.Close()
 }
 ```
 
@@ -282,24 +282,24 @@ coin_spends = clvm.coin_spends()
 
 ```go
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 // Create the inner spend with conditions
 memos, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(recipientPuzzleHash)})
-defer memos.Free()
+defer memos.Close()
 
 createCoin, _ := clvm.CreateCoin(recipientPuzzleHash, 1000, memos)
-defer createCoin.Free()
+defer createCoin.Close()
 
 delegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin})
-defer delegated.Free()
+defer delegated.Close()
 
 innerSpend, _ := clvm.StandardSpend(publicKey, delegated)
-defer innerSpend.Free()
+defer innerSpend.Close()
 
 // Wrap it in a CatSpend and execute
 catSpend, _ := sdk.CatSpendNew(cat, innerSpend)
-defer catSpend.Free()
+defer catSpend.Close()
 
 clvm.SpendCats([]*sdk.CatSpend{catSpend})
 
@@ -360,11 +360,11 @@ child_coin = child_cat.coin
 ```go
 // After spending, compute the new CAT
 childCat, _ := cat.Child(recipientPuzzleHash, 1000)
-defer childCat.Free()
+defer childCat.Close()
 
 // Access the underlying coin
 childCoin, _ := childCat.Coin()
-defer childCoin.Free()
+defer childCoin.Close()
 ```
 
   </TabItem>
@@ -444,28 +444,28 @@ clvm.spend_cats([
 ```go
 // Build spends for multiple CAT coins
 emptyDelegated, _ := clvm.DelegatedSpend([]*sdk.Program{})
-defer emptyDelegated.Free()
+defer emptyDelegated.Close()
 
 spend1, _ := clvm.StandardSpend(publicKey, emptyDelegated)
-defer spend1.Free()
+defer spend1.Close()
 
 memos, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(recipient)})
-defer memos.Free()
+defer memos.Close()
 
 createCoin, _ := clvm.CreateCoin(recipient, combinedAmount, memos)
-defer createCoin.Free()
+defer createCoin.Close()
 
 delegated2, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin})
-defer delegated2.Free()
+defer delegated2.Close()
 
 spend2, _ := clvm.StandardSpend(publicKey, delegated2)
-defer spend2.Free()
+defer spend2.Close()
 
 catSpend1, _ := sdk.CatSpendNew(cat1, spend1)
-defer catSpend1.Free()
+defer catSpend1.Close()
 
 catSpend2, _ := sdk.CatSpendNew(cat2, spend2)
-defer catSpend2.Free()
+defer catSpend2.Close()
 
 clvm.SpendCats([]*sdk.CatSpend{catSpend1, catSpend2})
 ```
@@ -602,10 +602,10 @@ coin_spends = clvm.coin_spends()
 
 ```go
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 catCoin, _ := cat.Coin()
-defer catCoin.Free()
+defer catCoin.Close()
 
 catCoinAmount, _ := catCoin.Amount()
 catCoinId, _ := catCoin.CoinId()
@@ -614,22 +614,22 @@ xchCoinId, _ := xchCoin.CoinId()
 
 // Spend the CAT (linked to XCH spend)
 memos, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(recipientPuzzleHash)})
-defer memos.Free()
+defer memos.Close()
 
 createCoin, _ := clvm.CreateCoin(recipientPuzzleHash, catCoinAmount, memos)
-defer createCoin.Free()
+defer createCoin.Close()
 
 assertSpend, _ := clvm.AssertConcurrentSpend(xchCoinId) // Link to XCH spend
-defer assertSpend.Free()
+defer assertSpend.Close()
 
 delegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin, assertSpend})
-defer delegated.Free()
+defer delegated.Close()
 
 innerSpend, _ := clvm.StandardSpend(publicKey, delegated)
-defer innerSpend.Free()
+defer innerSpend.Close()
 
 catSpend, _ := sdk.CatSpendNew(cat, innerSpend)
-defer catSpend.Free()
+defer catSpend.Close()
 
 clvm.SpendCats([]*sdk.CatSpend{catSpend})
 
@@ -639,25 +639,25 @@ xchAmount, _ := xchCoin.Amount()
 change := xchAmount - fee
 
 reserveFee, _ := clvm.ReserveFee(fee)
-defer reserveFee.Free()
+defer reserveFee.Close()
 
 assertCatSpend, _ := clvm.AssertConcurrentSpend(catCoinId) // Link to CAT spend
-defer assertCatSpend.Free()
+defer assertCatSpend.Close()
 
 xchConditions := []*sdk.Program{reserveFee, assertCatSpend}
 
 if change > 0 {
 	changeMemos, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(myPuzzleHash)})
-	defer changeMemos.Free()
+	defer changeMemos.Close()
 
 	changeCoin, _ := clvm.CreateCoin(myPuzzleHash, change, changeMemos)
-	defer changeCoin.Free()
+	defer changeCoin.Close()
 
 	xchConditions = append(xchConditions, changeCoin)
 }
 
 xchDelegated, _ := clvm.DelegatedSpend(xchConditions)
-defer xchDelegated.Free()
+defer xchDelegated.Close()
 
 clvm.SpendStandardCoin(xchCoin, publicKey, xchDelegated)
 
@@ -861,45 +861,45 @@ func issueAndSpendCat(recipientPuzzleHash []byte, amount uint64) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	defer clvm.Free()
+	defer clvm.Close()
 
 	sim, err := sdk.SimulatorNew()
 	if err != nil {
 		return nil, err
 	}
-	defer sim.Free()
+	defer sim.Close()
 
 	alice, err := sim.Bls(amount)
 	if err != nil {
 		return nil, err
 	}
-	defer alice.Free()
+	defer alice.Close()
 
 	// Step 1: Create TAIL and issue CAT
 	tail, _ := clvm.Nil()
-	defer tail.Free()
+	defer tail.Close()
 
 	assetId, _ := tail.TreeHash()
 
 	puzzleHash, _ := alice.PuzzleHash()
 
 	catInfo, _ := sdk.NewCatInfo(assetId, nil, puzzleHash)
-	defer catInfo.Free()
+	defer catInfo.Close()
 
 	catPuzzleHash, _ := catInfo.PuzzleHash()
 
 	// Issue the CAT
 	createCoin, _ := clvm.CreateCoin(catPuzzleHash, amount, nil)
-	defer createCoin.Free()
+	defer createCoin.Close()
 
 	delegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin})
-	defer delegated.Free()
+	defer delegated.Close()
 
 	coin, _ := alice.Coin()
-	defer coin.Free()
+	defer coin.Close()
 
 	pk, _ := alice.Pk()
-	defer pk.Free()
+	defer pk.Close()
 
 	clvm.SpendStandardCoin(coin, pk, delegated)
 
@@ -907,38 +907,38 @@ func issueAndSpendCat(recipientPuzzleHash []byte, amount uint64) ([]byte, error)
 	coinId, _ := coin.CoinId()
 
 	eveCoin, _ := sdk.NewCoin(coinId, catPuzzleHash, amount)
-	defer eveCoin.Free()
+	defer eveCoin.Close()
 
 	eveCat, _ := sdk.NewCat(eveCoin, nil, catInfo)
-	defer eveCat.Free()
+	defer eveCat.Close()
 
 	// Step 2: Spend the CAT with TAIL reveal, then transfer
 	memos, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(recipientPuzzleHash)})
-	defer memos.Free()
+	defer memos.Close()
 
 	transferCoin, _ := clvm.CreateCoin(recipientPuzzleHash, amount, memos)
-	defer transferCoin.Free()
+	defer transferCoin.Close()
 
 	nilSolution, _ := clvm.Nil()
-	defer nilSolution.Free()
+	defer nilSolution.Close()
 
 	runTail, _ := clvm.RunCatTail(tail, nilSolution)
-	defer runTail.Free()
+	defer runTail.Close()
 
 	innerDelegated, _ := clvm.DelegatedSpend([]*sdk.Program{transferCoin, runTail})
-	defer innerDelegated.Free()
+	defer innerDelegated.Close()
 
 	innerSpend, _ := clvm.StandardSpend(pk, innerDelegated)
-	defer innerSpend.Free()
+	defer innerSpend.Close()
 
 	catSpend, _ := sdk.CatSpendNew(eveCat, innerSpend)
-	defer catSpend.Free()
+	defer catSpend.Close()
 
 	clvm.SpendCats([]*sdk.CatSpend{catSpend})
 
 	// Sign and validate
 	sk, _ := alice.Sk()
-	defer sk.Free()
+	defer sk.Close()
 
 	coinSpends, _ := clvm.CoinSpends()
 	sim.SpendCoins(coinSpends, []*sdk.SecretKey{sk})

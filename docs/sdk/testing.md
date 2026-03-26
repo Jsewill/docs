@@ -58,7 +58,7 @@ import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // Create a new simulator instance
 sim, _ := sdk.SimulatorNew()
-defer sim.Free()
+defer sim.Close()
 ```
 
   </TabItem>
@@ -132,12 +132,12 @@ charlie = sim.bls(0)  # No initial funds
 
 ```go
 sim, _ := sdk.SimulatorNew()
-defer sim.Free()
+defer sim.Close()
 
 // Create a key pair with a coin worth 1000 mojos
 alice, _ := sim.Bls(1000)
-defer alice.Sk.Free()
-defer alice.Pk.Free()
+defer alice.Sk.Close()
+defer alice.Pk.Close()
 
 // alice contains:
 // - alice.Pk: *PublicKey
@@ -219,18 +219,18 @@ sim.spend_coins(coin_spends, [alice.sk])
 
 ```go
 sim, _ := sdk.SimulatorNew()
-defer sim.Free()
+defer sim.Close()
 
 clvm, _ := sim.Clvm()
-defer clvm.Free()
+defer clvm.Close()
 
 alice, _ := sim.Bls(1000)
-defer alice.Sk.Free()
-defer alice.Pk.Free()
+defer alice.Sk.Close()
+defer alice.Pk.Close()
 
 bob, _ := sim.Bls(0)
-defer bob.Sk.Free()
-defer bob.Pk.Free()
+defer bob.Sk.Close()
+defer bob.Pk.Close()
 
 // Build your transaction
 conditions := []interface{}{
@@ -357,27 +357,27 @@ func TestSimpleTransfer(t *testing.T) {
     if err != nil {
         t.Fatalf("failed to create simulator: %v", err)
     }
-    defer sim.Free()
+    defer sim.Close()
 
     clvm, err := sim.Clvm()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }
-    defer clvm.Free()
+    defer clvm.Close()
 
     alice, err := sim.Bls(1000)
     if err != nil {
         t.Fatalf("failed to create alice: %v", err)
     }
-    defer alice.Sk.Free()
-    defer alice.Pk.Free()
+    defer alice.Sk.Close()
+    defer alice.Pk.Close()
 
     bob, err := sim.Bls(0)
     if err != nil {
         t.Fatalf("failed to create bob: %v", err)
     }
-    defer bob.Sk.Free()
-    defer bob.Pk.Free()
+    defer bob.Sk.Close()
+    defer bob.Pk.Close()
 
     conditions := []interface{}{
         clvm.CreateCoin(bob.PuzzleHash, 900, nil),
@@ -545,20 +545,20 @@ func TestIssuesAndSpendsACat(t *testing.T) {
     if err != nil {
         t.Fatalf("failed to create simulator: %v", err)
     }
-    defer sim.Free()
+    defer sim.Close()
 
     clvm, err := sim.Clvm()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }
-    defer clvm.Free()
+    defer clvm.Close()
 
     alice, err := sim.Bls(1)
     if err != nil {
         t.Fatalf("failed to create alice: %v", err)
     }
-    defer alice.Sk.Free()
-    defer alice.Pk.Free()
+    defer alice.Sk.Close()
+    defer alice.Pk.Close()
 
     tail, _ := clvm.Nil()
     assetId, _ := tail.TreeHash()
@@ -689,20 +689,20 @@ func TestInsufficientFundsFails(t *testing.T) {
     if err != nil {
         t.Fatalf("failed to create simulator: %v", err)
     }
-    defer sim.Free()
+    defer sim.Close()
 
     clvm, err := sim.Clvm()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }
-    defer clvm.Free()
+    defer clvm.Close()
 
     alice, err := sim.Bls(1000)
     if err != nil {
         t.Fatalf("failed to create alice: %v", err)
     }
-    defer alice.Sk.Free()
-    defer alice.Pk.Free()
+    defer alice.Sk.Close()
+    defer alice.Pk.Close()
 
     // Try to create more than we have
     conditions := []interface{}{clvm.CreateCoin(alice.PuzzleHash, 2000, nil)}
@@ -842,34 +842,34 @@ func TestMultiSpend(t *testing.T) {
     if err != nil {
         t.Fatalf("failed to create simulator: %v", err)
     }
-    defer sim.Free()
+    defer sim.Close()
 
     clvm, err := sim.Clvm()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }
-    defer clvm.Free()
+    defer clvm.Close()
 
     alice, err := sim.Bls(1000)
     if err != nil {
         t.Fatalf("failed to create alice: %v", err)
     }
-    defer alice.Sk.Free()
-    defer alice.Pk.Free()
+    defer alice.Sk.Close()
+    defer alice.Pk.Close()
 
     bob, err := sim.Bls(500)
     if err != nil {
         t.Fatalf("failed to create bob: %v", err)
     }
-    defer bob.Sk.Free()
-    defer bob.Pk.Free()
+    defer bob.Sk.Close()
+    defer bob.Pk.Close()
 
     charlie, err := sim.Bls(0)
     if err != nil {
         t.Fatalf("failed to create charlie: %v", err)
     }
-    defer charlie.Sk.Free()
-    defer charlie.Pk.Free()
+    defer charlie.Sk.Close()
+    defer charlie.Pk.Close()
 
     // Alice sends 900
     clvm.SpendStandardCoin(

@@ -67,10 +67,10 @@ clvm, err := sdk.ClvmNew()
 if err != nil {
     // handle error
 }
-defer clvm.Free()
+defer clvm.Close()
 ```
 
-The `Clvm` type combines the functionality of `SpendContext` (memory management and spend collection) with direct methods for creating conditions and spending coins. All allocated objects must be freed with `defer obj.Free()`.
+The `Clvm` type combines the functionality of `SpendContext` (memory management and spend collection) with direct methods for creating conditions and spending coins. All allocated objects must be freed with `defer obj.Close()`.
 
   </TabItem>
 </Tabs>
@@ -132,7 +132,7 @@ spend, err := clvm.DelegatedSpend(conditions)
 if err != nil {
     // handle error
 }
-defer spend.Free()
+defer spend.Close()
 
 err = clvm.SpendStandardCoin(coin, publicKey, spend)
 if err != nil {
@@ -176,7 +176,7 @@ coinSpends, err := clvm.CoinSpends()
 if err != nil {
     // handle error
 }
-defer coinSpends.Free()
+defer coinSpends.Close()
 ```
 
   </TabItem>
@@ -239,7 +239,7 @@ program, err := clvm.Alloc([]any{puzzleHash, amount})
 if err != nil {
     // handle error
 }
-defer program.Free()
+defer program.Close()
 
 // Get tree hash of a program
 hash, err := clvm.TreeHash(program)
@@ -444,26 +444,26 @@ func buildTransaction(
     if err != nil {
         return nil, err
     }
-    defer clvm.Free()
+    defer clvm.Close()
 
     // 2. Build conditions with hints
     memos, err := clvm.Alloc([]any{recipient})
     if err != nil {
         return nil, err
     }
-    defer memos.Free()
+    defer memos.Close()
 
     createCoin, err := clvm.CreateCoin(recipient, amount, memos)
     if err != nil {
         return nil, err
     }
-    defer createCoin.Free()
+    defer createCoin.Close()
 
     reserveFee, err := clvm.ReserveFee(fee)
     if err != nil {
         return nil, err
     }
-    defer reserveFee.Free()
+    defer reserveFee.Close()
 
     conditions := []any{createCoin, reserveFee}
 
@@ -472,7 +472,7 @@ func buildTransaction(
     if err != nil {
         return nil, err
     }
-    defer spend.Free()
+    defer spend.Close()
 
     err = clvm.SpendStandardCoin(coin, publicKey, spend)
     if err != nil {

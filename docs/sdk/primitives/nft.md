@@ -181,13 +181,13 @@ import (
 
 func main() {
 	clvm, _ := sdk.ClvmNew()
-	defer clvm.Free()
+	defer clvm.Close()
 
 	sim, _ := sdk.SimulatorNew()
-	defer sim.Free()
+	defer sim.Close()
 
 	alice, _ := sim.Bls(1)
-	defer alice.Free()
+	defer alice.Close()
 
 	// Define the NFT metadata
 	metadata, _ := sdk.NftMetadataNew(
@@ -200,14 +200,14 @@ func main() {
 		[]string{}, // license URIs
 		nil,        // license hash (optional)
 	)
-	defer metadata.Free()
+	defer metadata.Close()
 
 	// Mint the NFT
 	nftMetadata, _ := clvm.NftMetadata(metadata)
-	defer nftMetadata.Free()
+	defer nftMetadata.Close()
 
 	updaterHash, _ := sdk.ConstantsNftMetadataUpdaterDefaultHash()
-	defer updaterHash.Free()
+	defer updaterHash.Close()
 
 	mint, _ := sdk.NftMintNew(
 		nftMetadata,
@@ -216,14 +216,14 @@ func main() {
 		alice.PuzzleHash, // Owner p2 puzzle hash
 		300,              // Royalty in basis points (3%)
 	)
-	defer mint.Free()
+	defer mint.Close()
 
 	result, _ := clvm.MintNfts(alice.Coin.CoinId(), []sdk.NftMint{mint})
-	defer result.Free()
+	defer result.Close()
 
 	// Spend the parent coin with mint conditions
 	delegated, _ := clvm.DelegatedSpend(result.ParentConditions)
-	defer delegated.Free()
+	defer delegated.Close()
 
 	clvm.SpendStandardCoin(alice.Coin, alice.Pk, delegated)
 
@@ -299,22 +299,22 @@ coin_spends = clvm.coin_spends()
 ```go
 // Transfer the NFT to a new owner
 memos, _ := clvm.Alloc([][]byte{newOwnerPuzzleHash})
-defer memos.Free()
+defer memos.Close()
 
 createCoin, _ := clvm.CreateCoin(newOwnerPuzzleHash, 1, memos)
-defer createCoin.Free()
+defer createCoin.Close()
 
 delegated, _ := clvm.DelegatedSpend([]sdk.Condition{createCoin})
-defer delegated.Free()
+defer delegated.Close()
 
 innerSpend, _ := clvm.StandardSpend(alice.Pk, delegated)
-defer innerSpend.Free()
+defer innerSpend.Close()
 
 newNft, _ := clvm.SpendNft(nft, innerSpend)
-defer newNft.Free()
+defer newNft.Close()
 
 coinSpends, _ := clvm.CoinSpends()
-defer coinSpends.Free()
+defer coinSpends.Close()
 ```
 
   </TabItem>
@@ -396,26 +396,26 @@ new_nft = clvm.spend_nft(nft, inner_spend)
 ```go
 // Build conditions for the NFT spend
 announcement, _ := clvm.CreateCoinAnnouncement([]byte("nft_action"))
-defer announcement.Free()
+defer announcement.Close()
 
 fee, _ := clvm.ReserveFee(feeAmount)
-defer fee.Free()
+defer fee.Close()
 
 memos, _ := clvm.Alloc([][]byte{newOwnerPuzzleHash})
-defer memos.Free()
+defer memos.Close()
 
 createCoin, _ := clvm.CreateCoin(newOwnerPuzzleHash, 1, memos)
-defer createCoin.Free()
+defer createCoin.Close()
 
 delegated, _ := clvm.DelegatedSpend([]sdk.Condition{announcement, fee, createCoin})
-defer delegated.Free()
+defer delegated.Close()
 
 innerSpend, _ := clvm.StandardSpend(alice.Pk, delegated)
-defer innerSpend.Free()
+defer innerSpend.Close()
 
 // Spend with custom conditions
 newNft, _ := clvm.SpendNft(nft, innerSpend)
-defer newNft.Free()
+defer newNft.Close()
 ```
 
   </TabItem>
@@ -648,13 +648,13 @@ import (
 
 func mintAndTransferNft(recipientPuzzleHash []byte) ([]byte, error) {
 	clvm, _ := sdk.ClvmNew()
-	defer clvm.Free()
+	defer clvm.Close()
 
 	sim, _ := sdk.SimulatorNew()
-	defer sim.Free()
+	defer sim.Close()
 
 	alice, _ := sim.Bls(2)
-	defer alice.Free()
+	defer alice.Close()
 
 	// Step 1: Mint the NFT
 	metadata, _ := sdk.NftMetadataNew(
@@ -662,13 +662,13 @@ func mintAndTransferNft(recipientPuzzleHash []byte) ([]byte, error) {
 		[]string{"https://example.com/image.png"},
 		nil, []string{}, nil, []string{}, nil,
 	)
-	defer metadata.Free()
+	defer metadata.Close()
 
 	nftMetadata, _ := clvm.NftMetadata(metadata)
-	defer nftMetadata.Free()
+	defer nftMetadata.Close()
 
 	updaterHash, _ := sdk.ConstantsNftMetadataUpdaterDefaultHash()
-	defer updaterHash.Free()
+	defer updaterHash.Close()
 
 	mint, _ := sdk.NftMintNew(
 		nftMetadata,
@@ -677,13 +677,13 @@ func mintAndTransferNft(recipientPuzzleHash []byte) ([]byte, error) {
 		alice.PuzzleHash,
 		0, // No royalties
 	)
-	defer mint.Free()
+	defer mint.Close()
 
 	result, _ := clvm.MintNfts(alice.Coin.CoinId(), []sdk.NftMint{mint})
-	defer result.Free()
+	defer result.Close()
 
 	delegated, _ := clvm.DelegatedSpend(result.ParentConditions)
-	defer delegated.Free()
+	defer delegated.Close()
 
 	clvm.SpendStandardCoin(alice.Coin, alice.Pk, delegated)
 
@@ -691,22 +691,22 @@ func mintAndTransferNft(recipientPuzzleHash []byte) ([]byte, error) {
 
 	// Step 2: Transfer to recipient
 	memos, _ := clvm.Alloc([][]byte{recipientPuzzleHash})
-	defer memos.Free()
+	defer memos.Close()
 
 	createCoin, _ := clvm.CreateCoin(recipientPuzzleHash, 1, memos)
-	defer createCoin.Free()
+	defer createCoin.Close()
 
 	transferDelegated, _ := clvm.DelegatedSpend([]sdk.Condition{createCoin})
-	defer transferDelegated.Free()
+	defer transferDelegated.Close()
 
 	innerSpend, _ := clvm.StandardSpend(alice.Pk, transferDelegated)
-	defer innerSpend.Free()
+	defer innerSpend.Close()
 
 	clvm.SpendNft(result.Nfts[0], innerSpend)
 
 	// Sign and validate
 	coinSpends, _ := clvm.CoinSpends()
-	defer coinSpends.Free()
+	defer coinSpends.Close()
 
 	sim.SpendCoins(coinSpends, []sdk.SecretKey{alice.Sk})
 

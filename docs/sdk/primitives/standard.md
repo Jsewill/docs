@@ -66,7 +66,7 @@ import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // The puzzle hash can be computed from a synthetic public key
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 puzzleHash, _ := clvm.StandardPuzzleHash(publicKey)
 
@@ -150,20 +150,20 @@ coin_spends = clvm.coin_spends()
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 // Build the conditions
 createCoin, _ := clvm.CreateCoin(recipientPuzzleHash, 900, nil)
-defer createCoin.Free()
+defer createCoin.Close()
 
 reserveFee, _ := clvm.ReserveFee(100)
-defer reserveFee.Free()
+defer reserveFee.Close()
 
 conditions := []*sdk.Program{createCoin, reserveFee}
 
 // Create the spend
 delegatedSpend, _ := clvm.DelegatedSpend(conditions)
-defer delegatedSpend.Free()
+defer delegatedSpend.Close()
 
 clvm.SpendStandardCoin(coin, publicKey, delegatedSpend)
 
@@ -225,19 +225,19 @@ clvm.spend_standard_coin(coin, public_key, clvm.delegated_spend(conditions))
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 // Include puzzle hash as memo for coin discovery
 memos, _ := clvm.Alloc([]any{recipientPuzzleHash})
-defer memos.Free()
+defer memos.Close()
 
 createCoin, _ := clvm.CreateCoin(recipientPuzzleHash, amount, memos)
-defer createCoin.Free()
+defer createCoin.Close()
 
 conditions := []*sdk.Program{createCoin}
 
 delegatedSpend, _ := clvm.DelegatedSpend(conditions)
-defer delegatedSpend.Free()
+defer delegatedSpend.Close()
 
 clvm.SpendStandardCoin(coin, publicKey, delegatedSpend)
 ```
@@ -294,27 +294,27 @@ clvm.spend_standard_coin(coin, public_key, clvm.delegated_spend(conditions))
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 memosA, _ := clvm.Alloc([]any{recipientA})
-defer memosA.Free()
+defer memosA.Close()
 
 memosB, _ := clvm.Alloc([]any{recipientB})
-defer memosB.Free()
+defer memosB.Close()
 
 createCoinA, _ := clvm.CreateCoin(recipientA, 500, memosA)
-defer createCoinA.Free()
+defer createCoinA.Close()
 
 createCoinB, _ := clvm.CreateCoin(recipientB, 400, memosB)
-defer createCoinB.Free()
+defer createCoinB.Close()
 
 reserveFee, _ := clvm.ReserveFee(100)
-defer reserveFee.Free()
+defer reserveFee.Close()
 
 conditions := []*sdk.Program{createCoinA, createCoinB, reserveFee}
 
 delegatedSpend, _ := clvm.DelegatedSpend(conditions)
-defer delegatedSpend.Free()
+defer delegatedSpend.Close()
 
 clvm.SpendStandardCoin(coin, publicKey, delegatedSpend)
 ```
@@ -400,34 +400,34 @@ coin_spends = clvm.coin_spends()
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 // First coin - sends to recipient, asserts second coin is spent together
 memos1, _ := clvm.Alloc([]any{recipient})
-defer memos1.Free()
+defer memos1.Close()
 
 createCoin1, _ := clvm.CreateCoin(recipient, 1000, memos1)
-defer createCoin1.Free()
+defer createCoin1.Close()
 
 assert1, _ := clvm.AssertConcurrentSpend(coin2.CoinId())
-defer assert1.Free()
+defer assert1.Close()
 
 conditions1 := []*sdk.Program{createCoin1, assert1}
 delegatedSpend1, _ := clvm.DelegatedSpend(conditions1)
-defer delegatedSpend1.Free()
+defer delegatedSpend1.Close()
 
 clvm.SpendStandardCoin(coin1, pk1, delegatedSpend1)
 
 // Second coin - pays fee, asserts first coin is spent together
 reserveFee, _ := clvm.ReserveFee(100)
-defer reserveFee.Free()
+defer reserveFee.Close()
 
 assert2, _ := clvm.AssertConcurrentSpend(coin1.CoinId())
-defer assert2.Free()
+defer assert2.Close()
 
 conditions2 := []*sdk.Program{reserveFee, assert2}
 delegatedSpend2, _ := clvm.DelegatedSpend(conditions2)
-defer delegatedSpend2.Free()
+defer delegatedSpend2.Close()
 
 clvm.SpendStandardCoin(coin2, pk2, delegatedSpend2)
 
@@ -537,42 +537,42 @@ conditions = [
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 // Conditions are built as a slice of *sdk.Program objects
 
 // Create output coins
 createCoin, _ := clvm.CreateCoin(puzzleHash, amount, memos)
-defer createCoin.Free()
+defer createCoin.Close()
 
 // Transaction fee (goes to farmers)
 reserveFee, _ := clvm.ReserveFee(feeAmount)
-defer reserveFee.Free()
+defer reserveFee.Close()
 
 // Link multiple spends together (IMPORTANT for security)
 assertSpend, _ := clvm.AssertConcurrentSpend(otherCoinId)
-defer assertSpend.Free()
+defer assertSpend.Close()
 
 // Coin announcements for coordinating multi-spend transactions
 createCoinAnn, _ := clvm.CreateCoinAnnouncement(message)
-defer createCoinAnn.Free()
+defer createCoinAnn.Close()
 
 assertCoinAnn, _ := clvm.AssertCoinAnnouncement(announcementId)
-defer assertCoinAnn.Free()
+defer assertCoinAnn.Close()
 
 // Puzzle announcements
 createPuzzleAnn, _ := clvm.CreatePuzzleAnnouncement(message)
-defer createPuzzleAnn.Free()
+defer createPuzzleAnn.Close()
 
 assertPuzzleAnn, _ := clvm.AssertPuzzleAnnouncement(announcementId)
-defer assertPuzzleAnn.Free()
+defer assertPuzzleAnn.Close()
 
 // Time conditions
 assertSeconds, _ := clvm.AssertSecondsAbsolute(timestamp)
-defer assertSeconds.Free()
+defer assertSeconds.Close()
 
 assertHeight, _ := clvm.AssertHeightAbsolute(blockHeight)
-defer assertHeight.Free()
+defer assertHeight.Close()
 
 conditions := []*sdk.Program{
     createCoin, reserveFee, assertSpend,
@@ -673,25 +673,25 @@ import (
 )
 
 clvm, _ := sdk.ClvmNew()
-defer clvm.Free()
+defer clvm.Close()
 
 // The parent coin
 parentCoin := coin
 
 // Conditions create a new coin
 createCoin, _ := clvm.CreateCoin(recipientPuzzleHash, 900, nil)
-defer createCoin.Free()
+defer createCoin.Close()
 
 conditions := []*sdk.Program{createCoin}
 
 delegatedSpend, _ := clvm.DelegatedSpend(conditions)
-defer delegatedSpend.Free()
+defer delegatedSpend.Close()
 
 clvm.SpendStandardCoin(parentCoin, publicKey, delegatedSpend)
 
 // Calculate the new coin's ID
 newCoin, _ := sdk.CoinNew(parentCoin.CoinId(), recipientPuzzleHash, 900)
-defer newCoin.Free()
+defer newCoin.Close()
 
 fmt.Println("New coin ID:", newCoin.CoinId())
 ```
@@ -961,7 +961,7 @@ func sendXch(
     fee uint64,
 ) ([]*sdk.CoinSpend, error) {
     clvm, _ := sdk.ClvmNew()
-    defer clvm.Free()
+    defer clvm.Close()
 
     sourcePuzzleHash, _ := clvm.StandardPuzzleHash(sourcePublicKey)
 
@@ -970,30 +970,30 @@ func sendXch(
 
     // Build conditions
     recipientMemos, _ := clvm.Alloc([]any{recipientPuzzleHash})
-    defer recipientMemos.Free()
+    defer recipientMemos.Close()
 
     createCoin, _ := clvm.CreateCoin(recipientPuzzleHash, amount, recipientMemos)
-    defer createCoin.Free()
+    defer createCoin.Close()
 
     reserveFee, _ := clvm.ReserveFee(fee)
-    defer reserveFee.Free()
+    defer reserveFee.Close()
 
     conditions := []*sdk.Program{createCoin, reserveFee}
 
     // Add change output if needed
     if change > 0 {
         changeMemos, _ := clvm.Alloc([]any{sourcePuzzleHash})
-        defer changeMemos.Free()
+        defer changeMemos.Close()
 
         changeCoin, _ := clvm.CreateCoin(sourcePuzzleHash, change, changeMemos)
-        defer changeCoin.Free()
+        defer changeCoin.Close()
 
         conditions = append(conditions, changeCoin)
     }
 
     // Create the spend
     delegatedSpend, _ := clvm.DelegatedSpend(conditions)
-    defer delegatedSpend.Free()
+    defer delegatedSpend.Close()
 
     clvm.SpendStandardCoin(sourceCoin, sourcePublicKey, delegatedSpend)
 
@@ -1002,10 +1002,10 @@ func sendXch(
 
 // Example usage with Simulator (handles signing automatically)
 sim, _ := sdk.SimulatorNew()
-defer sim.Free()
+defer sim.Close()
 
 alice, _ := sim.Bls(1000)
-defer alice.Free()
+defer alice.Close()
 
 coinSpends, _ := sendXch(
     alice.Coin(),
