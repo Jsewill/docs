@@ -53,17 +53,17 @@ The Python bindings provide a Pythonic API with full type stub support for IDE a
   </TabItem>
   <TabItem value="go" label="Go">
 
-Build the shared library and use with CGo:
+Install via `go get`:
 
 ```bash
-cd go && make build
+go get github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk
 ```
 
 ```go
-import "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 ```
 
-The Go bindings use CGo to call into the Rust shared library. See the [go/](https://github.com/xch-dev/chia-wallet-sdk/tree/main/go) directory for build instructions.
+Prebuilt static libraries are included for Linux, macOS, Windows (x86_64 and ARM64), and Android ARM64. No Rust toolchain is required. See the [go/](https://github.com/xch-dev/chia-wallet-sdk/tree/main/go) directory for details and building from source.
 
   </TabItem>
 </Tabs>
@@ -192,13 +192,13 @@ This example demonstrates the core pattern you'll use throughout the SDK:
 
 The SDK is organized around these key abstractions:
 
-| Concept | Rust | Node.js / Python | Description |
-|---------|------|------------------|-------------|
-| **Context** | `SpendContext` | `Clvm` | Transaction builder that manages memory and collects coin spends |
-| **Conditions** | `Conditions` builder | Method calls (`createCoin`, etc.) | Output conditions (create coin, fees, announcements) |
-| **Actions** | `Action`, `Spends` | `Action`, `Spends` | High-level declarative transaction API |
-| **Primitives** | `Cat`, `Nft`, `Vault`, etc. | `spendCats`, `spendNft`, etc. | High-level APIs for Chia constructs |
-| **Simulator** | `Simulator` | `Simulator` | Test transaction validation locally |
+| Concept | Rust | Node.js / Python | Go | Description |
+|---------|------|------------------|-----|-------------|
+| **Context** | `SpendContext` | `Clvm` | `Clvm` | Transaction builder that manages memory and collects coin spends |
+| **Conditions** | `Conditions` builder | Method calls (`createCoin`, etc.) | Method calls (`CreateCoin`, etc.) | Output conditions (create coin, fees, announcements) |
+| **Actions** | `Action`, `Spends` | `Action`, `Spends` | `Action`, `Spends` | High-level declarative transaction API |
+| **Primitives** | `Cat`, `Nft`, `Vault`, etc. | `spendCats`, `spendNft`, etc. | `SpendCats`, `SpendNft`, etc. | High-level APIs for Chia constructs |
+| **Simulator** | `Simulator` | `Simulator` | `Simulator` | Test transaction validation locally |
 
 ## Next Steps
 
