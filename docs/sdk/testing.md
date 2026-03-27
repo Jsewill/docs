@@ -136,14 +136,13 @@ defer sim.Close()
 
 // Create a key pair with a coin worth 1000 mojos
 alice, _ := sim.Bls(1000)
-defer alice.Sk.Close()
-defer alice.Pk.Close()
+defer alice.Close()
 
-// alice contains:
-// - alice.Pk: *PublicKey
-// - alice.Sk: *SecretKey
-// - alice.PuzzleHash: []byte
-// - alice.Coin: Coin
+// alice fields accessed via methods (each returns value, error):
+// - alice.Pk(): (*PublicKey, error)
+// - alice.Sk(): (*SecretKey, error)
+// - alice.PuzzleHash(): ([]byte, error)
+// - alice.Coin(): (*Coin, error)
 
 // Create multiple test identities
 alice, _ := sim.Bls(1_000_000)
@@ -221,28 +220,36 @@ sim.spend_coins(coin_spends, [alice.sk])
 sim, _ := sdk.SimulatorNew()
 defer sim.Close()
 
-clvm, _ := sim.Clvm()
+clvm, _ := sdk.ClvmNew()
 defer clvm.Close()
 
 alice, _ := sim.Bls(1000)
-defer alice.Sk.Close()
-defer alice.Pk.Close()
+defer alice.Close()
+aliceSk, _ := alice.Sk()
+defer aliceSk.Close()
+alicePk, _ := alice.Pk()
+defer alicePk.Close()
+aliceCoin, _ := alice.Coin()
+defer aliceCoin.Close()
 
 bob, _ := sim.Bls(0)
-defer bob.Sk.Close()
-defer bob.Pk.Close()
+defer bob.Close()
+bobPuzzleHash, _ := bob.PuzzleHash()
 
 // Build your transaction
-conditions := []interface{}{
-    clvm.CreateCoin(bob.PuzzleHash, 900, nil),
-    clvm.ReserveFee(100),
-}
+createCoin, _ := clvm.CreateCoin(bobPuzzleHash, 900, nil)
+defer createCoin.Close()
+reserveFee, _ := clvm.ReserveFee(100)
+defer reserveFee.Close()
 
-clvm.SpendStandardCoin(alice.Coin, alice.Pk, clvm.DelegatedSpend(conditions))
+delegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin, reserveFee})
+defer delegated.Close()
+
+clvm.SpendStandardCoin(aliceCoin, alicePk, delegated)
 
 // Extract spends and validate
 coinSpends, _ := clvm.CoinSpends()
-sim.SpendCoins(coinSpends, []*sdk.SecretKey{alice.Sk})
+sim.SpendCoins(coinSpends, []*sdk.SecretKey{aliceSk})
 ```
 
   </TabItem>
@@ -359,7 +366,7 @@ func TestSimpleTransfer(t *testing.T) {
     }
     defer sim.Close()
 
-    clvm, err := sim.Clvm()
+    clvm, err := sdk.ClvmNew()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }
@@ -369,25 +376,33 @@ func TestSimpleTransfer(t *testing.T) {
     if err != nil {
         t.Fatalf("failed to create alice: %v", err)
     }
-    defer alice.Sk.Close()
-    defer alice.Pk.Close()
+    defer alice.Close()
+    aliceSk, _ := alice.Sk()
+    defer aliceSk.Close()
+    alicePk, _ := alice.Pk()
+    defer alicePk.Close()
+    aliceCoin, _ := alice.Coin()
+    defer aliceCoin.Close()
 
-    bob, err := sim.Bls(0)
+    bob, _ := sim.Bls(0)
+    defer bob.Close()
+    bobPuzzleHash, _ := bob.PuzzleHash()
+
+    createCoin, _ := clvm.CreateCoin(bobPuzzleHash, 900, nil)
+    defer createCoin.Close()
+    reserveFee, _ := clvm.ReserveFee(100)
+    defer reserveFee.Close()
+
+    delegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin, reserveFee})
+    defer delegated.Close()
+
+    err = clvm.SpendStandardCoin(aliceCoin, alicePk, delegated)
     if err != nil {
-        t.Fatalf("failed to create bob: %v", err)
+        t.Fatalf("failed to spend standard coin: %v", err)
     }
-    defer bob.Sk.Close()
-    defer bob.Pk.Close()
-
-    conditions := []interface{}{
-        clvm.CreateCoin(bob.PuzzleHash, 900, nil),
-        clvm.ReserveFee(100),
-    }
-
-    clvm.SpendStandardCoin(alice.Coin, alice.Pk, clvm.DelegatedSpend(conditions))
 
     coinSpends, _ := clvm.CoinSpends()
-    _, err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{alice.Sk})
+    err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{aliceSk})
     if err != nil {
         t.Fatalf("failed to spend coins: %v", err)
     }
@@ -547,7 +562,7 @@ func TestIssuesAndSpendsACat(t *testing.T) {
     }
     defer sim.Close()
 
-    clvm, err := sim.Clvm()
+    clvm, err := sdk.ClvmNew()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }
@@ -557,43 +572,67 @@ func TestIssuesAndSpendsACat(t *testing.T) {
     if err != nil {
         t.Fatalf("failed to create alice: %v", err)
     }
-    defer alice.Sk.Close()
-    defer alice.Pk.Close()
+    defer alice.Close()
+
+    aliceSk, _ := alice.Sk()
+    defer aliceSk.Close()
+    alicePk, _ := alice.Pk()
+    defer alicePk.Close()
+    alicePuzzleHash, _ := alice.PuzzleHash()
+    aliceCoin, _ := alice.Coin()
+    defer aliceCoin.Close()
 
     tail, _ := clvm.Nil()
+    defer tail.Close()
     assetId, _ := tail.TreeHash()
-    catInfo, _ := sdk.NewCatInfo(assetId, nil, alice.PuzzleHash)
+    catInfo, _ := sdk.NewCatInfo(assetId, nil, alicePuzzleHash)
+    defer catInfo.Close()
 
     // Issue a CAT
     catPuzzleHash, _ := catInfo.PuzzleHash()
-    clvm.SpendStandardCoin(
-        alice.Coin,
-        alice.Pk,
-        clvm.DelegatedSpend([]interface{}{clvm.CreateCoin(catPuzzleHash, 1, nil)}),
-    )
 
-    coinId, _ := alice.Coin.CoinId()
+    createCoin, _ := clvm.CreateCoin(catPuzzleHash, 1, nil)
+    defer createCoin.Close()
+
+    delegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin})
+    defer delegated.Close()
+
+    err = clvm.SpendStandardCoin(aliceCoin, alicePk, delegated)
+    if err != nil {
+        t.Fatalf("failed to spend standard coin: %v", err)
+    }
+
+    coinId, _ := aliceCoin.CoinId()
     eveCoin, _ := sdk.NewCoin(coinId, catPuzzleHash, 1)
+    defer eveCoin.Close()
     eve, _ := sdk.NewCat(eveCoin, nil, catInfo)
+    defer eve.Close()
 
     nilPtr, _ := clvm.Nil()
-    allocMemos, _ := clvm.Alloc([][]byte{alice.PuzzleHash})
+    defer nilPtr.Close()
+    allocMemos, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(alicePuzzleHash)})
+    defer allocMemos.Close()
 
-    clvm.SpendCats([]interface{}{
-        sdk.NewCatSpend(
-            eve,
-            clvm.StandardSpend(
-                alice.Pk,
-                clvm.DelegatedSpend([]interface{}{
-                    clvm.CreateCoin(alice.PuzzleHash, 1, allocMemos),
-                    clvm.RunCatTail(tail, nilPtr),
-                }),
-            ),
-        ),
-    })
+    createCoin2, _ := clvm.CreateCoin(alicePuzzleHash, 1, allocMemos)
+    defer createCoin2.Close()
+    runTail, _ := clvm.RunCatTail(tail, nilPtr)
+    defer runTail.Close()
+
+    innerDelegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin2, runTail})
+    defer innerDelegated.Close()
+    innerSpend, _ := clvm.StandardSpend(alicePk, innerDelegated)
+    defer innerSpend.Close()
+
+    catSpend, _ := sdk.CatSpendNew(eve, innerSpend)
+    defer catSpend.Close()
+
+    _, err = clvm.SpendCats([]*sdk.CatSpend{catSpend})
+    if err != nil {
+        t.Fatalf("failed to spend cats: %v", err)
+    }
 
     coinSpends, _ := clvm.CoinSpends()
-    _, err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{alice.Sk})
+    err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{aliceSk})
     if err != nil {
         t.Fatalf("failed to spend coins: %v", err)
     }
@@ -691,7 +730,7 @@ func TestInsufficientFundsFails(t *testing.T) {
     }
     defer sim.Close()
 
-    clvm, err := sim.Clvm()
+    clvm, err := sdk.ClvmNew()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }
@@ -701,17 +740,27 @@ func TestInsufficientFundsFails(t *testing.T) {
     if err != nil {
         t.Fatalf("failed to create alice: %v", err)
     }
-    defer alice.Sk.Close()
-    defer alice.Pk.Close()
+    defer alice.Close()
+    aliceSk, _ := alice.Sk()
+    defer aliceSk.Close()
+    alicePk, _ := alice.Pk()
+    defer alicePk.Close()
+    alicePuzzleHash, _ := alice.PuzzleHash()
+    aliceCoin, _ := alice.Coin()
+    defer aliceCoin.Close()
 
     // Try to create more than we have
-    conditions := []interface{}{clvm.CreateCoin(alice.PuzzleHash, 2000, nil)}
+    createCoin, _ := clvm.CreateCoin(alicePuzzleHash, 2000, nil)
+    defer createCoin.Close()
 
-    clvm.SpendStandardCoin(alice.Coin, alice.Pk, clvm.DelegatedSpend(conditions))
+    delegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoin})
+    defer delegated.Close()
+
+    clvm.SpendStandardCoin(aliceCoin, alicePk, delegated)
 
     // This should return an error
     coinSpends, _ := clvm.CoinSpends()
-    _, err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{alice.Sk})
+    err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{aliceSk})
     if err == nil {
         t.Fatalf("expected error for insufficient funds, got nil")
     }
@@ -844,7 +893,7 @@ func TestMultiSpend(t *testing.T) {
     }
     defer sim.Close()
 
-    clvm, err := sim.Clvm()
+    clvm, err := sdk.ClvmNew()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }
@@ -854,42 +903,49 @@ func TestMultiSpend(t *testing.T) {
     if err != nil {
         t.Fatalf("failed to create alice: %v", err)
     }
-    defer alice.Sk.Close()
-    defer alice.Pk.Close()
+    defer alice.Close()
+    aliceSk, _ := alice.Sk()
+    defer aliceSk.Close()
+    alicePk, _ := alice.Pk()
+    defer alicePk.Close()
+    aliceCoin, _ := alice.Coin()
+    defer aliceCoin.Close()
 
     bob, err := sim.Bls(500)
     if err != nil {
         t.Fatalf("failed to create bob: %v", err)
     }
-    defer bob.Sk.Close()
-    defer bob.Pk.Close()
+    defer bob.Close()
+    bobSk, _ := bob.Sk()
+    defer bobSk.Close()
+    bobPk, _ := bob.Pk()
+    defer bobPk.Close()
+    bobPuzzleHash, _ := bob.PuzzleHash()
+    bobCoin, _ := bob.Coin()
+    defer bobCoin.Close()
 
-    charlie, err := sim.Bls(0)
-    if err != nil {
-        t.Fatalf("failed to create charlie: %v", err)
-    }
-    defer charlie.Sk.Close()
-    defer charlie.Pk.Close()
+    charlie, _ := sim.Bls(0)
+    defer charlie.Close()
+    charliePuzzleHash, _ := charlie.PuzzleHash()
 
     // Alice sends 900
-    clvm.SpendStandardCoin(
-        alice.Coin,
-        alice.Pk,
-        clvm.DelegatedSpend([]interface{}{clvm.CreateCoin(charlie.PuzzleHash, 900, nil)}),
-    )
+    createCoinCharlie, _ := clvm.CreateCoin(charliePuzzleHash, 900, nil)
+    defer createCoinCharlie.Close()
+    aliceDelegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoinCharlie})
+    defer aliceDelegated.Close()
+    clvm.SpendStandardCoin(aliceCoin, alicePk, aliceDelegated)
 
     // Bob pays the fee
-    clvm.SpendStandardCoin(
-        bob.Coin,
-        bob.Pk,
-        clvm.DelegatedSpend([]interface{}{
-            clvm.CreateCoin(bob.PuzzleHash, 400, nil),
-            clvm.ReserveFee(100),
-        }),
-    )
+    createCoinBob, _ := clvm.CreateCoin(bobPuzzleHash, 400, nil)
+    defer createCoinBob.Close()
+    reserveFee, _ := clvm.ReserveFee(100)
+    defer reserveFee.Close()
+    bobDelegated, _ := clvm.DelegatedSpend([]*sdk.Program{createCoinBob, reserveFee})
+    defer bobDelegated.Close()
+    clvm.SpendStandardCoin(bobCoin, bobPk, bobDelegated)
 
     coinSpends, _ := clvm.CoinSpends()
-    _, err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{alice.Sk, bob.Sk})
+    err = sim.SpendCoins(coinSpends, []*sdk.SecretKey{aliceSk, bobSk})
     if err != nil {
         t.Fatalf("failed to spend coins: %v", err)
     }

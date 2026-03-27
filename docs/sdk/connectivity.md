@@ -67,7 +67,7 @@ peer, _ := sdk.NewPeerConnect("mainnet", "node.example.com:8444", connector, opt
 defer peer.Close()
 
 // Query coin state
-headerHash, _ := sim.HeaderHash() // or known header hash
+headerHash := []byte{...} // known header hash from a trusted source
 coinStates, _ := peer.RequestCoinState(coinIds, nil, headerHash, false)
 defer coinStates.Close()
 ```

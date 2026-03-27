@@ -65,10 +65,7 @@ puzzle_hash = standard_puzzle_hash(public_key)
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // The puzzle hash can be computed from a synthetic public key
-clvm, _ := sdk.ClvmNew()
-defer clvm.Close()
-
-puzzleHash, _ := clvm.StandardPuzzleHash(publicKey)
+puzzleHash, _ := sdk.StandardPuzzleHash(publicKey)
 
 // In Go, spends are created directly via the Clvm object
 // rather than through a separate layer object
@@ -228,7 +225,7 @@ clvm, _ := sdk.ClvmNew()
 defer clvm.Close()
 
 // Include puzzle hash as memo for coin discovery
-memos, _ := clvm.Alloc([]any{recipientPuzzleHash})
+memos, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(recipientPuzzleHash)})
 defer memos.Close()
 
 createCoin, _ := clvm.CreateCoin(recipientPuzzleHash, amount, memos)
@@ -296,10 +293,10 @@ import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 clvm, _ := sdk.ClvmNew()
 defer clvm.Close()
 
-memosA, _ := clvm.Alloc([]any{recipientA})
+memosA, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(recipientA)})
 defer memosA.Close()
 
-memosB, _ := clvm.Alloc([]any{recipientB})
+memosB, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(recipientB)})
 defer memosB.Close()
 
 createCoinA, _ := clvm.CreateCoin(recipientA, 500, memosA)
@@ -403,13 +400,14 @@ clvm, _ := sdk.ClvmNew()
 defer clvm.Close()
 
 // First coin - sends to recipient, asserts second coin is spent together
-memos1, _ := clvm.Alloc([]any{recipient})
+memos1, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(recipient)})
 defer memos1.Close()
 
 createCoin1, _ := clvm.CreateCoin(recipient, 1000, memos1)
 defer createCoin1.Close()
 
-assert1, _ := clvm.AssertConcurrentSpend(coin2.CoinId())
+coin2Id, _ := coin2.CoinId()
+assert1, _ := clvm.AssertConcurrentSpend(coin2Id)
 defer assert1.Close()
 
 conditions1 := []*sdk.Program{createCoin1, assert1}
@@ -422,7 +420,8 @@ clvm.SpendStandardCoin(coin1, pk1, delegatedSpend1)
 reserveFee, _ := clvm.ReserveFee(100)
 defer reserveFee.Close()
 
-assert2, _ := clvm.AssertConcurrentSpend(coin1.CoinId())
+coin1Id, _ := coin1.CoinId()
+assert2, _ := clvm.AssertConcurrentSpend(coin1Id)
 defer assert2.Close()
 
 conditions2 := []*sdk.Program{reserveFee, assert2}
@@ -690,10 +689,12 @@ defer delegatedSpend.Close()
 clvm.SpendStandardCoin(parentCoin, publicKey, delegatedSpend)
 
 // Calculate the new coin's ID
-newCoin, _ := sdk.CoinNew(parentCoin.CoinId(), recipientPuzzleHash, 900)
+parentCoinId, _ := parentCoin.CoinId()
+newCoin, _ := sdk.NewCoin(parentCoinId, recipientPuzzleHash, 900)
 defer newCoin.Close()
 
-fmt.Println("New coin ID:", newCoin.CoinId())
+newCoinId, _ := newCoin.CoinId()
+fmt.Println("New coin ID:", newCoinId)
 ```
 
   </TabItem>
@@ -963,13 +964,14 @@ func sendXch(
     clvm, _ := sdk.ClvmNew()
     defer clvm.Close()
 
-    sourcePuzzleHash, _ := clvm.StandardPuzzleHash(sourcePublicKey)
+    sourcePuzzleHash, _ := sdk.StandardPuzzleHash(sourcePublicKey)
 
     // Calculate change (if any)
-    change := sourceCoin.Amount() - amount - fee
+    sourceAmount, _ := sourceCoin.Amount()
+    change := sourceAmount - amount - fee
 
     // Build conditions
-    recipientMemos, _ := clvm.Alloc([]any{recipientPuzzleHash})
+    recipientMemos, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(recipientPuzzleHash)})
     defer recipientMemos.Close()
 
     createCoin, _ := clvm.CreateCoin(recipientPuzzleHash, amount, recipientMemos)
@@ -982,7 +984,7 @@ func sendXch(
 
     // Add change output if needed
     if change > 0 {
-        changeMemos, _ := clvm.Alloc([]any{sourcePuzzleHash})
+        changeMemos, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(sourcePuzzleHash)})
         defer changeMemos.Close()
 
         changeCoin, _ := clvm.CreateCoin(sourcePuzzleHash, change, changeMemos)
@@ -1006,17 +1008,23 @@ defer sim.Close()
 
 alice, _ := sim.Bls(1000)
 defer alice.Close()
+aliceSk, _ := alice.Sk()
+defer aliceSk.Close()
+alicePk, _ := alice.Pk()
+defer alicePk.Close()
+aliceCoin, _ := alice.Coin()
+defer aliceCoin.Close()
 
 coinSpends, _ := sendXch(
-    alice.Coin(),
-    alice.Pk(),
+    aliceCoin,
+    alicePk,
     recipientPuzzleHash,
     900,
     100,
 )
 
 // Simulator signs and validates the transaction
-sim.SpendCoins(coinSpends, []*sdk.SecretKey{alice.Sk()})
+sim.SpendCoins(coinSpends, []*sdk.SecretKey{aliceSk})
 ```
 
   </TabItem>

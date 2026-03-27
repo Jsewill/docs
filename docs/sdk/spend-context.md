@@ -176,7 +176,6 @@ coinSpends, err := clvm.CoinSpends()
 if err != nil {
     // handle error
 }
-defer coinSpends.Close()
 ```
 
   </TabItem>
@@ -235,14 +234,14 @@ nil = clvm.nil()
 
 ```go
 // Allocate values to CLVM (returns a Program)
-program, err := clvm.Alloc([]any{puzzleHash, amount})
+program, err := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(puzzleHash), sdk.ClvmInt(amount)})
 if err != nil {
     // handle error
 }
 defer program.Close()
 
 // Get tree hash of a program
-hash, err := clvm.TreeHash(program)
+hash, err := program.TreeHash()
 if err != nil {
     // handle error
 }
@@ -433,12 +432,12 @@ def build_transaction(
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 func buildTransaction(
-    coin sdk.Coin,
-    publicKey sdk.PublicKey,
+    coin *sdk.Coin,
+    publicKey *sdk.PublicKey,
     recipient []byte,
     amount uint64,
     fee uint64,
-) ([]sdk.CoinSpend, error) {
+) ([]*sdk.CoinSpend, error) {
     // 1. Create context
     clvm, err := sdk.ClvmNew()
     if err != nil {
@@ -447,7 +446,7 @@ func buildTransaction(
     defer clvm.Close()
 
     // 2. Build conditions with hints
-    memos, err := clvm.Alloc([]any{recipient})
+    memos, err := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(recipient)})
     if err != nil {
         return nil, err
     }
@@ -465,10 +464,8 @@ func buildTransaction(
     }
     defer reserveFee.Close()
 
-    conditions := []any{createCoin, reserveFee}
-
     // 3. Spend the coin
-    spend, err := clvm.DelegatedSpend(conditions)
+    spend, err := clvm.DelegatedSpend([]*sdk.Program{createCoin, reserveFee})
     if err != nil {
         return nil, err
     }

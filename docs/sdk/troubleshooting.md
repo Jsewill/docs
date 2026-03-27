@@ -625,7 +625,7 @@ sim, _ := sdk.SimulatorNew()
 defer sim.Close()
 // Setup state...
 
-err := sim.SpendCoins(coinSpends, signatures, secretKeys)
+err := sim.SpendCoins(coinSpends, secretKeys)
 if err != nil {
     fmt.Printf("Spend failed: %v\n", err)
 }
