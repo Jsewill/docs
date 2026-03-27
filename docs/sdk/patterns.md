@@ -37,7 +37,7 @@ fn send_payment(/* params */) -> Result<SpendBundle> {
 
 ```go
 func sendPayment(/* params */) (*sdk.SpendBundle, error) {
-    clvm, _ := sdk.ClvmNew()
+    clvm, _ := sdk.NewClvm()
     defer clvm.Close()
 
     // Build transaction
@@ -94,7 +94,7 @@ type TransactionBuilder struct {
 }
 
 func NewTransactionBuilder() *TransactionBuilder {
-    clvm, _ := sdk.ClvmNew()
+    clvm, _ := sdk.NewClvm()
     return &TransactionBuilder{clvm: clvm}
 }
 
@@ -156,7 +156,7 @@ let spends = ctx.take();
   <TabItem value="go" label="Go">
 
 ```go
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Collect all coin IDs for concurrent spend assertions
@@ -233,7 +233,7 @@ let spends = ctx.take();
   <TabItem value="go" label="Go">
 
 ```go
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // First spend creates a coin
@@ -417,7 +417,7 @@ fn try_build_transaction(/* params */) -> Result<Vec<CoinSpend>> {
 
 ```go
 func tryBuildTransaction(/* params */) ([]*sdk.CoinSpend, error) {
-    clvm, _ := sdk.ClvmNew()
+    clvm, _ := sdk.NewClvm()
     defer clvm.Close() // Always cleaned up, even on error
 
     // Attempt to build

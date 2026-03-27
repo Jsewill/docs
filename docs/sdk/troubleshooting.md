@@ -621,7 +621,7 @@ if let Err(e) = result {
   <TabItem value="go" label="Go">
 
 ```go
-sim, _ := sdk.SimulatorNew()
+sim, _ := sdk.NewSimulator()
 defer sim.Close()
 // Setup state...
 

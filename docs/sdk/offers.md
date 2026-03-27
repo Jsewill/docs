@@ -45,7 +45,7 @@ import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // The settlement layer is used internally by the SDK
 // when constructing offer spends via Clvm methods:
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Build a settlement spend with notarized payments
@@ -93,7 +93,7 @@ let notarized_payment = NotarizedPayment::new(
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // Build notarized payments for settlement
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 payment, _ := sdk.NewPayment(recipientPuzzleHash, amount, memos)
@@ -188,7 +188,7 @@ import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 // In Go, offers are built using the Clvm spending primitives
 // and then encoded for sharing.
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Step 1: Lock XCH to settlement puzzle
@@ -310,7 +310,7 @@ makerBundle, _ := sdk.DecodeOffer(encodedOffer)
 defer makerBundle.Close()
 
 // Step 2: Build taker's spends using Clvm
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Spend CATs to satisfy the maker's request
@@ -412,7 +412,7 @@ fn create_nft_offer(
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Step 1: Spend the NFT into the settlement layer
@@ -533,7 +533,7 @@ import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 makerBundle, _ := sdk.DecodeOffer(encodedOffer)
 defer makerBundle.Close()
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Step 2: Unlock the NFT via settlement

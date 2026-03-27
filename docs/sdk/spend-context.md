@@ -63,7 +63,7 @@ The `Clvm` class combines the functionality of `SpendContext` (memory management
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, err := sdk.ClvmNew()
+clvm, err := sdk.NewClvm()
 if err != nil {
     // handle error
 }
@@ -439,7 +439,7 @@ func buildTransaction(
     fee uint64,
 ) ([]*sdk.CoinSpend, error) {
     // 1. Create context
-    clvm, err := sdk.ClvmNew()
+    clvm, err := sdk.NewClvm()
     if err != nil {
         return nil, err
     }

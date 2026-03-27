@@ -48,27 +48,32 @@ let coin_states = peer.request_coin_state(
   <TabItem value="go" label="Go">
 
 ```go
-import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+import (
+	"context"
+	sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+)
+
+ctx := context.Background()
 
 // Generate or load TLS certificate
 cert, _ := sdk.NewCertificateGenerate()
 defer cert.Close()
 
 // Create a connector from the certificate
-connector, _ := sdk.ConnectorNew(cert)
+connector, _ := sdk.NewConnector(cert)
 defer connector.Close()
 
 // Configure peer options
-options, _ := sdk.PeerOptionsNew()
+options, _ := sdk.NewPeerOptions()
 defer options.Close()
 
 // Connect to a peer
-peer, _ := sdk.NewPeerConnect("mainnet", "node.example.com:8444", connector, options)
+peer, _ := sdk.NewPeerConnect(ctx, "mainnet", "node.example.com:8444", connector, options)
 defer peer.Close()
 
 // Query coin state
 headerHash := []byte{...} // known header hash from a trusted source
-coinStates, _ := peer.RequestCoinState(coinIds, nil, headerHash, false)
+coinStates, _ := peer.RequestCoinState(ctx, coinIds, nil, headerHash, false)
 defer coinStates.Close()
 ```
 
@@ -110,18 +115,23 @@ let states = client.get_coin_state(coin_ids).await?;
   <TabItem value="go" label="Go">
 
 ```go
-import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+import (
+	"context"
+	sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+)
+
+ctx := context.Background()
 
 // Create client for an RPC endpoint
-client, _ := sdk.RpcClientNew("https://api.example.com")
+client, _ := sdk.NewRpcClient("https://api.example.com")
 defer client.Close()
 
 // Query coins by puzzle hash
-coins, _ := client.GetCoinRecordsByPuzzleHash(puzzleHash, nil, nil, nil)
+coins, _ := client.GetCoinRecordsByPuzzleHash(ctx, puzzleHash, nil, nil, nil)
 defer coins.Close()
 
 // Get blockchain state
-state, _ := client.GetBlockchainState()
+state, _ := client.GetBlockchainState(ctx)
 defer state.Close()
 ```
 
@@ -152,14 +162,19 @@ let blockchain_state = client.get_blockchain_state().await?;
   <TabItem value="go" label="Go">
 
 ```go
-import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+import (
+	"context"
+	sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+)
+
+ctx := context.Background()
 
 // The Go bindings use a single RPC client for full node access
-client, _ := sdk.RpcClientNew("https://localhost:8555")
+client, _ := sdk.NewRpcClient("https://localhost:8555")
 defer client.Close()
 
 // Use full node RPC methods
-state, _ := client.GetBlockchainState()
+state, _ := client.GetBlockchainState(ctx)
 defer state.Close()
 ```
 
@@ -193,10 +208,15 @@ let response = client.push_tx(spend_bundle).await?;
   <TabItem value="go" label="Go">
 
 ```go
-import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+import (
+	"context"
+	sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
+)
+
+ctx := context.Background()
 
 // Build your transaction
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 // ... add spends ...
 coinSpends, _ := clvm.CoinSpends()
@@ -206,7 +226,7 @@ sb, _ := sdk.NewSpendBundle(coinSpends, aggregatedSignature)
 defer sb.Close()
 
 // Broadcast via RPC client
-response, _ := client.PushTx(sb)
+response, _ := client.PushTx(ctx, sb)
 defer response.Close()
 ```
 

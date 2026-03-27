@@ -146,7 +146,7 @@ coin_spends = clvm.coin_spends()
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Build the conditions
@@ -221,7 +221,7 @@ clvm.spend_standard_coin(coin, public_key, clvm.delegated_spend(conditions))
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Include puzzle hash as memo for coin discovery
@@ -290,7 +290,7 @@ clvm.spend_standard_coin(coin, public_key, clvm.delegated_spend(conditions))
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 memosA, _ := clvm.Alloc(sdk.ClvmList{sdk.ClvmBytes(recipientA)})
@@ -396,7 +396,7 @@ coin_spends = clvm.coin_spends()
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // First coin - sends to recipient, asserts second coin is spent together
@@ -535,7 +535,7 @@ conditions = [
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Conditions are built as a slice of *sdk.Program objects
@@ -671,7 +671,7 @@ import (
     sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 )
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // The parent coin
@@ -961,7 +961,7 @@ func sendXch(
     amount uint64,
     fee uint64,
 ) ([]*sdk.CoinSpend, error) {
-    clvm, _ := sdk.ClvmNew()
+    clvm, _ := sdk.NewClvm()
     defer clvm.Close()
 
     sourcePuzzleHash, _ := sdk.StandardPuzzleHash(sourcePublicKey)
@@ -1003,7 +1003,7 @@ func sendXch(
 }
 
 // Example usage with Simulator (handles signing automatically)
-sim, _ := sdk.SimulatorNew()
+sim, _ := sdk.NewSimulator()
 defer sim.Close()
 
 alice, _ := sim.Bls(1000)

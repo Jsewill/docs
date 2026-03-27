@@ -57,7 +57,7 @@ sim = Simulator()
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // Create a new simulator instance
-sim, _ := sdk.SimulatorNew()
+sim, _ := sdk.NewSimulator()
 defer sim.Close()
 ```
 
@@ -131,7 +131,7 @@ charlie = sim.bls(0)  # No initial funds
   <TabItem value="go" label="Go">
 
 ```go
-sim, _ := sdk.SimulatorNew()
+sim, _ := sdk.NewSimulator()
 defer sim.Close()
 
 // Create a key pair with a coin worth 1000 mojos
@@ -217,10 +217,10 @@ sim.spend_coins(coin_spends, [alice.sk])
   <TabItem value="go" label="Go">
 
 ```go
-sim, _ := sdk.SimulatorNew()
+sim, _ := sdk.NewSimulator()
 defer sim.Close()
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 alice, _ := sim.Bls(1000)
@@ -360,13 +360,13 @@ import (
 )
 
 func TestSimpleTransfer(t *testing.T) {
-    sim, err := sdk.SimulatorNew()
+    sim, err := sdk.NewSimulator()
     if err != nil {
         t.Fatalf("failed to create simulator: %v", err)
     }
     defer sim.Close()
 
-    clvm, err := sdk.ClvmNew()
+    clvm, err := sdk.NewClvm()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }
@@ -556,13 +556,13 @@ import (
 )
 
 func TestIssuesAndSpendsACat(t *testing.T) {
-    sim, err := sdk.SimulatorNew()
+    sim, err := sdk.NewSimulator()
     if err != nil {
         t.Fatalf("failed to create simulator: %v", err)
     }
     defer sim.Close()
 
-    clvm, err := sdk.ClvmNew()
+    clvm, err := sdk.NewClvm()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }
@@ -623,7 +623,7 @@ func TestIssuesAndSpendsACat(t *testing.T) {
     innerSpend, _ := clvm.StandardSpend(alicePk, innerDelegated)
     defer innerSpend.Close()
 
-    catSpend, _ := sdk.CatSpendNew(eve, innerSpend)
+    catSpend, _ := sdk.NewCatSpend(eve, innerSpend)
     defer catSpend.Close()
 
     _, err = clvm.SpendCats([]*sdk.CatSpend{catSpend})
@@ -724,13 +724,13 @@ import (
 )
 
 func TestInsufficientFundsFails(t *testing.T) {
-    sim, err := sdk.SimulatorNew()
+    sim, err := sdk.NewSimulator()
     if err != nil {
         t.Fatalf("failed to create simulator: %v", err)
     }
     defer sim.Close()
 
-    clvm, err := sdk.ClvmNew()
+    clvm, err := sdk.NewClvm()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }
@@ -887,13 +887,13 @@ import (
 )
 
 func TestMultiSpend(t *testing.T) {
-    sim, err := sdk.SimulatorNew()
+    sim, err := sdk.NewSimulator()
     if err != nil {
         t.Fatalf("failed to create simulator: %v", err)
     }
     defer sim.Close()
 
-    clvm, err := sdk.ClvmNew()
+    clvm, err := sdk.NewClvm()
     if err != nil {
         t.Fatalf("failed to create clvm: %v", err)
     }

@@ -41,7 +41,7 @@ let child_vault = vault.child(new_custody_hash, new_amount);
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Mint a new vault
@@ -98,7 +98,7 @@ let did = Did {
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Create an eve DID
@@ -152,7 +152,7 @@ let option = OptionContract {
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Spend an option contract
@@ -252,7 +252,7 @@ let streamed = StreamedAsset {
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Spend a streamed asset at a given payment time
@@ -292,7 +292,7 @@ use chia_wallet_sdk::prelude::*;
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Create a bulletin with messages

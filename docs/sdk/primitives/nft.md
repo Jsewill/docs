@@ -180,10 +180,10 @@ import (
 )
 
 func main() {
-	clvm, _ := sdk.ClvmNew()
+	clvm, _ := sdk.NewClvm()
 	defer clvm.Close()
 
-	sim, _ := sdk.SimulatorNew()
+	sim, _ := sdk.NewSimulator()
 	defer sim.Close()
 
 	alice, _ := sim.Bls(1)
@@ -655,10 +655,10 @@ import (
 )
 
 func mintAndTransferNft(recipientPuzzleHash []byte) ([]byte, error) {
-	clvm, _ := sdk.ClvmNew()
+	clvm, _ := sdk.NewClvm()
 	defer clvm.Close()
 
-	sim, _ := sdk.SimulatorNew()
+	sim, _ := sdk.NewSimulator()
 	defer sim.Close()
 
 	alice, _ := sim.Bls(2)

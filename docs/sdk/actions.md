@@ -108,7 +108,7 @@ existingCat, _ := sdk.NewIdExisting(assetId)
 defer existingCat.Close()
 
 // Reference a new asset created in the current transaction
-newAsset, _ := sdk.NewIdNew(0) // First action that creates an asset
+newAsset, _ := sdk.NewId(0) // First action that creates an asset
 defer newAsset.Close()
 ```
 
@@ -199,7 +199,7 @@ sendCat, _ := sdk.NewActionSend(catId, recipientPuzzleHash, 500, nil)
 defer sendCat.Close()
 
 // Send a newly created asset (from action at index 0)
-newId, _ := sdk.NewIdNew(0)
+newId, _ := sdk.NewId(0)
 defer newId.Close()
 sendNew, _ := sdk.NewActionSend(newId, recipientPuzzleHash, 100, nil)
 defer sendNew.Close()
@@ -405,7 +405,7 @@ update = Action.update_nft(Id.existing(launcher_id), [metadata_update])
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Mint an NFT
@@ -570,11 +570,11 @@ sim.spend_coins(clvm.coin_spends(), [pair.sk])
 ```go
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // 1. Create Spends with a change puzzle hash
-spends, _ := sdk.SpendsNew(clvm, changePuzzleHash)
+spends, _ := sdk.NewSpends(clvm, changePuzzleHash)
 defer spends.Close()
 
 // 2. Add coins to spend
@@ -907,11 +907,11 @@ import (
 )
 
 func sendXch(recipientPuzzleHash []byte, amount uint64, fee uint64) error {
-	clvm, _ := sdk.ClvmNew()
+	clvm, _ := sdk.NewClvm()
 	defer clvm.Close()
 
 	// Create spends
-	spends, _ := sdk.SpendsNew(clvm, senderPh)
+	spends, _ := sdk.NewSpends(clvm, senderPh)
 	defer spends.Close()
 
 	// Add coins
@@ -1099,11 +1099,11 @@ import (
 )
 
 func issueAndSendCat(recipientPuzzleHash []byte, issuanceAmount uint64, sendAmount uint64) error {
-	clvm, _ := sdk.ClvmNew()
+	clvm, _ := sdk.NewClvm()
 	defer clvm.Close()
 
 	// Create spends
-	spends, _ := sdk.SpendsNew(clvm, alicePh)
+	spends, _ := sdk.NewSpends(clvm, alicePh)
 	defer spends.Close()
 
 	// Add coins
@@ -1112,7 +1112,7 @@ func issueAndSendCat(recipientPuzzleHash []byte, issuanceAmount uint64, sendAmou
 	// Issue CAT at index 0, then send from it
 	issueAction, _ := sdk.NewActionSingleIssueCat(nil, issuanceAmount)
 	defer issueAction.Close()
-	newId, _ := sdk.NewIdNew(0)
+	newId, _ := sdk.NewId(0)
 	defer newId.Close()
 	sendAction, _ := sdk.NewActionSend(newId, recipientPuzzleHash, sendAmount, nil)
 	defer sendAction.Close()
@@ -1327,11 +1327,11 @@ import (
 )
 
 func mintAndUpdateNft() error {
-	clvm, _ := sdk.ClvmNew()
+	clvm, _ := sdk.NewClvm()
 	defer clvm.Close()
 
 	// Create spends
-	spends, _ := sdk.SpendsNew(clvm, alicePh)
+	spends, _ := sdk.NewSpends(clvm, alicePh)
 	defer spends.Close()
 
 	// Add coins
@@ -1351,7 +1351,7 @@ func mintAndUpdateNft() error {
 		nil,
 	)
 	defer mintAction.Close()
-	newId, _ := sdk.NewIdNew(0)
+	newId, _ := sdk.NewId(0)
 	defer newId.Close()
 	updateAction, _ := sdk.NewActionUpdateNft(newId, metadataSpends, nil)
 	defer updateAction.Close()

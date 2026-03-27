@@ -158,7 +158,7 @@ coin_spends = clvm.coin_spends()
 import sdk "github.com/xch-dev/chia-wallet-sdk/go/chiawalletsdk"
 
 // Create a CLVM instance to build the transaction
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Create conditions:

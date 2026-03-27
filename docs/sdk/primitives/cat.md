@@ -143,10 +143,10 @@ import (
 )
 
 func main() {
-	clvm, _ := sdk.ClvmNew()
+	clvm, _ := sdk.NewClvm()
 	defer clvm.Close()
 
-	sim, _ := sdk.SimulatorNew()
+	sim, _ := sdk.NewSimulator()
 	defer sim.Close()
 
 	alice, _ := sim.Bls(1000)
@@ -281,7 +281,7 @@ coin_spends = clvm.coin_spends()
   <TabItem value="go" label="Go">
 
 ```go
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 // Create the inner spend with conditions
@@ -298,7 +298,7 @@ innerSpend, _ := clvm.StandardSpend(publicKey, delegated)
 defer innerSpend.Close()
 
 // Wrap it in a CatSpend and execute
-catSpend, _ := sdk.CatSpendNew(cat, innerSpend)
+catSpend, _ := sdk.NewCatSpend(cat, innerSpend)
 defer catSpend.Close()
 
 clvm.SpendCats([]*sdk.CatSpend{catSpend})
@@ -461,10 +461,10 @@ defer delegated2.Close()
 spend2, _ := clvm.StandardSpend(publicKey, delegated2)
 defer spend2.Close()
 
-catSpend1, _ := sdk.CatSpendNew(cat1, spend1)
+catSpend1, _ := sdk.NewCatSpend(cat1, spend1)
 defer catSpend1.Close()
 
-catSpend2, _ := sdk.CatSpendNew(cat2, spend2)
+catSpend2, _ := sdk.NewCatSpend(cat2, spend2)
 defer catSpend2.Close()
 
 clvm.SpendCats([]*sdk.CatSpend{catSpend1, catSpend2})
@@ -601,7 +601,7 @@ coin_spends = clvm.coin_spends()
   <TabItem value="go" label="Go">
 
 ```go
-clvm, _ := sdk.ClvmNew()
+clvm, _ := sdk.NewClvm()
 defer clvm.Close()
 
 catCoin, _ := cat.Coin()
@@ -628,7 +628,7 @@ defer delegated.Close()
 innerSpend, _ := clvm.StandardSpend(publicKey, delegated)
 defer innerSpend.Close()
 
-catSpend, _ := sdk.CatSpendNew(cat, innerSpend)
+catSpend, _ := sdk.NewCatSpend(cat, innerSpend)
 defer catSpend.Close()
 
 clvm.SpendCats([]*sdk.CatSpend{catSpend})
@@ -857,13 +857,13 @@ import (
 )
 
 func issueAndSpendCat(recipientPuzzleHash []byte, amount uint64) ([]byte, error) {
-	clvm, err := sdk.ClvmNew()
+	clvm, err := sdk.NewClvm()
 	if err != nil {
 		return nil, err
 	}
 	defer clvm.Close()
 
-	sim, err := sdk.SimulatorNew()
+	sim, err := sdk.NewSimulator()
 	if err != nil {
 		return nil, err
 	}
@@ -931,7 +931,7 @@ func issueAndSpendCat(recipientPuzzleHash []byte, amount uint64) ([]byte, error)
 	innerSpend, _ := clvm.StandardSpend(pk, innerDelegated)
 	defer innerSpend.Close()
 
-	catSpend, _ := sdk.CatSpendNew(eveCat, innerSpend)
+	catSpend, _ := sdk.NewCatSpend(eveCat, innerSpend)
 	defer catSpend.Close()
 
 	clvm.SpendCats([]*sdk.CatSpend{catSpend})
